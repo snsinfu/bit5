@@ -1,0 +1,4 @@
+postgres_password: admin-password-xFM7x1Rb
+postgres_databases:
+  - name: myapp
+    password: myapp-password-iITZhIKX

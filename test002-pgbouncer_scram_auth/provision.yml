@@ -1,0 +1,171 @@
+- hosts: default
+  become: yes
+
+  tasks:
+
+    # POSTGRESQL -------------------------------------------------------------
+
+    - name: postgresql is installed
+      pkgng:
+        name: postgresql12-server
+        state: present
+
+    # initdb flag `-A scram-sha-256` is needed to enable SCRAM authentication
+    # for the super user. Without this flag, `postgresql_user` module below
+    # fails with an error: password authentication failed for user "postgres".
+    # Also, psql fails with the same error.
+    - name: postgresql service configuration is up
+      copy:
+        content: |
+          postgresql_enable="YES"
+          postgresql_data="/data/postgresql-12"
+          postgresql_initdb_flags="--locale C --encoding utf-8 -W -A scram-sha-256"
+        dest: /etc/rc.conf.d/postgresql
+      notify: restart postgresql
+
+    - name: postgresql data directory exists
+      file:
+        path: /data/postgresql-12
+        owner: postgres
+        group: postgres
+        state: directory
+
+    - name: postgresql database is created
+      expect:
+        command: service postgresql initdb
+        creates: /data/postgresql-12/PG_VERSION
+        responses:
+          "(password|again)": "{{ postgres_password }}"
+
+    # initdb requires the database directory to be empty. So, push config files
+    # after creating the database.
+    - name: postgresql server config is up
+      template:
+        src: assets/postgresql.conf
+        dest: /data/postgresql-12/postgresql.conf
+        owner: postgres
+        group: postgres
+      notify: restart postgresql
+
+    - name: postgresql auth config is up
+      template:
+        src: assets/pg_hba.conf
+        dest: /data/postgresql-12/pg_hba.conf
+        owner: postgres
+        group: postgres
+      notify: restart postgresql
+
+    - name: postgresql is started
+      service:
+        name: postgresql
+        state: started
+
+
+    # DATABASES AND USERS ----------------------------------------------------
+
+    # By default postgresql modules connect to local PostgreSQL server running
+    # on the provisioned host. So no need for specifying host or port to use
+    # these postgresql modules.
+
+    # According to the docs, postgresql_user module changes password as
+    # necessary. However, here password is changed every time the module runs.
+    # Why? Because of random SCRAM salt?
+    - name: database owners are present
+      postgresql_user:
+        name: "{{ item.name }}"
+        password: "{{ item.password }}"
+        login_password: "{{ postgres_password }}"
+      with_items: "{{ postgres_databases }}"
+
+    - name: databases are present
+      postgresql_db:
+        name: "{{ item.name }}"
+        owner: "{{ item.name }}"
+        login_password: "{{ postgres_password }}"
+      with_items: "{{ postgres_databases }}"
+
+    # Note: postgresql_ping only emits a warning on authentication failure.
+    - name: databases are actually accessible
+      postgresql_ping:
+        db: "{{ item.name }}"
+        login_user: "{{ item.name }}"
+        login_password: "{{ item.password }}"
+      with_items: "{{ postgres_databases }}"
+
+
+    # PGBOUNCER --------------------------------------------------------------
+
+    - name: pgbouncer is installed
+      pkgng:
+        name: pgbouncer
+        state: present
+
+    - name: pgbouncer config is up
+      copy:
+        src: assets/pgbouncer.ini
+        dest: /usr/local/etc/pgbouncer.ini
+
+    # Retrieve hashed passwords from the server. This is what mkauth.py [1]
+    # does, but I'm not sure if this is a preferred way or just a quick hack
+    # (security wise). Should I generate different SCRAM password hashes?
+    # [1]: https://github.com/pgbouncer/pgbouncer/blob/pgbouncer_1_14_0/etc/mkauth.py
+    - name: postgresql shadow passwords are collected
+      postgresql_query:
+        db: postgres
+        query: SELECT usename, passwd FROM pg_shadow WHERE usename != 'postgres'
+        login_password: "{{ postgres_password }}"
+      register: pg_shadow
+
+    - name: pgbouncer user list is up
+      copy:
+        content: |
+          {% for item in pg_shadow.query_result %}
+          "{{ item.usename }}" "{{ item.passwd }}"
+          {% endfor %}
+        dest: /usr/local/etc/pgbouncer.users
+        owner: pgbouncer
+        group: pgbouncer
+        mode: 0600
+
+    # Just use the same HBA as the actual server.
+    - name: pgbouncer auth config is up
+      copy:
+        src: assets/pg_hba.conf
+        dest: /usr/local/etc/pgbouncer.hba
+        owner: pgbouncer
+        group: pgbouncer
+        mode: 0600
+
+    - name: postgresql service configuration is up
+      copy:
+        content: |
+          pgbouncer_enable="YES"
+        dest: /etc/rc.conf.d/pgbouncer
+
+    - name: pgbouncner service is started
+      service:
+        name: pgbouncer
+        state: started
+
+
+    # TEST -------------------------------------------------------------------
+
+    - name: databases are accessible via pgbouncer
+      postgresql_ping:
+        db: "{{ item.name }}"
+        login_port: 6432
+        login_user: "{{ item.name }}"
+        login_password: "{{ item.password }}"
+      with_items: "{{ postgres_databases }}"
+
+
+  handlers:
+    - name: restart postgresql
+      service:
+        name: postgresql
+        state: restarted
+
+    - name: restart pgbouncer
+      service:
+        name: pgbouncer
+        state: restarted

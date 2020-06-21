@@ -1,0 +1,35 @@
+VM_CPUS = 2
+VM_MEMORY = 1024
+VM_BOX = "freebsd/FreeBSD-13.0-CURRENT"
+VM_IP = "10.7.58.10"
+
+Vagrant.configure("2") do |config|
+  config.vm.provider :virtualbox do |v|
+    v.cpus = VM_CPUS
+    v.memory = VM_MEMORY
+  end
+
+  config.vm.box = VM_BOX
+  config.vm.network :private_network, ip: VM_IP
+  config.vm.synced_folder ".", "/vagrant", disabled: true
+  config.ssh.shell = "/bin/sh"
+  config.vm.boot_timeout = 1000
+
+  config.vm.provision :shell, inline: <<-END
+    pkg update -q
+    pkg install -qy python3
+
+    # FreeBSD's psycopg2 package (mistakingly?) depends on postgresql11-client
+    # and conflicts with postgresql12-server installation. So we use virtualenv
+    # instead of system packages for Ansible modules. Maybe this should really
+    # install version-locked packages using requirements.txt.
+    python3 -mvenv /root/ansible_venv
+    /root/ansible_venv/bin/pip install pexpect psycopg2
+  END
+  config.vm.provision :ansible do |ansible|
+    ansible.playbook = "provision.yml"
+    ansible.extra_vars = {
+      ansible_python_interpreter: "/root/ansible_venv/bin/python"
+    }
+  end
+end

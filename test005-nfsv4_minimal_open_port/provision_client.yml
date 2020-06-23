@@ -1,0 +1,21 @@
+- hosts: n-client
+  become: yes
+
+  tasks:
+    - name: nfs client package is installed
+      apt:
+        name: nfs-common
+        state: present
+
+    - name: nfs volume is mounted
+      mount:
+        src: "{{ nfs_address }}:/"
+        path: /mnt
+        fstype: nfs4
+        state: mounted
+
+    - name: file is created on the nfs volume
+      copy:
+        content: |
+          The quick brown fox jumps over the lazy dog.
+        dest: /mnt/fox.txt

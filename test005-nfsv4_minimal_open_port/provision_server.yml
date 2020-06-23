@@ -1,0 +1,93 @@
+- hosts: n-server
+  become: yes
+
+  tasks:
+
+    # NFS --------------------------------------------------------------------
+
+    - name: nfs export directory exists
+      file:
+        path: /data/nfs
+        state: directory
+
+    - name: nfs volume is configured
+      copy:
+        content: |
+          V4: /data/nfs
+          /data/nfs -network {{ network }} -maproot 0:0
+        dest: /etc/exports
+      vars:
+        network: "{{ nfs_address | ipsubnet(24, 0) }}"
+      # Reloading (not restarting) mountd applies the change to the kernel. No
+      # need to restart nfsd. (XXX: But what happens to ongoing NFS I/O?)
+      notify: reload mountd
+
+    - name: nfsd service configuration is up
+      copy:
+        content: |
+          nfsv4_server_enable="YES"
+          nfs_server_enable="YES"
+          nfs_server_flags="-t"
+        dest: /etc/rc.conf.d/nfsd
+      notify: restart nfsd
+
+    # NFSv4 protocol is self-contained and does not need side channels like
+    # mountd anymore (so we can block all ports except 2049/tcp). But in
+    # reality, the nfsd implementation still depends on mountd running on the
+    # same host for loading /etc/exports.
+    #
+    # If mountd is disabled or not reloaded after changing /etc/exports, the
+    # client fails to mount the NFS volume with "access denied by server while
+    # mounting 10.7.58.10:/" or something. Rebooting the NFS server machine
+    # somehow fixes the problem probably because nfsd starts a new mountd as a
+    # dependency on fresh boot.
+    - name: mountd service configuration is up
+      copy:
+        content: |
+          mountd_enable="YES"
+        dest: /etc/rc.conf.d/mountd
+      notify: restart mountd
+
+    - name: nfs server is started
+      service:
+        name: nfsd
+        state: started
+
+    # IPFW -------------------------------------------------------------------
+
+    # This firewall blocks all communications but NFSv4 (2049/tcp).
+    - name: ipfw rule script is up
+      copy:
+        src: server-ipfw.rules
+        dest: /etc/ipfw.rules
+        mode: 0600
+      notify: restart ipfw
+
+    - name: ipfw service configuration is up
+      copy:
+        content: |
+          firewall_enable="YES"
+          firewall_script="/etc/ipfw.rules"
+        dest: /etc/rc.conf.d/ipfw
+      notify: restart ipfw
+
+    - name: ipfw service is started
+      service:
+        name: ipfw
+        state: started
+
+  handlers:
+    - name: reload mountd
+      service:
+        name: mountd
+        state: reloaded
+
+    - name: restart nfsd
+      service:
+        name: nfsd
+        state: restarted
+
+    - name: restart ipfw
+      service:
+        name: ipfw
+        state: restarted

@@ -41,3 +41,16 @@ Note that, to derive `ClientKey`, the proxy needs to use the same `StoredKey`
 as origin server. Since `StoredKey` depends on salt and hash rounds, the proxy
 cannot change these parameters. Hence, PgBouncer's `auth_file` entries need to
 exactly match the entries in PostgreSQL's `pg_shadow` table.
+
+## Security note
+
+Proxy can be a MitM attacker. If `auth_file` leaks and an attacker successfully
+makes a legitimate client to authenticate against attacker's fake server, the
+attacker gains `ClientKey` for the client and gains access to the origin server
+thereafter.
+
+So, if you use SCRAM authentication with PgBouncer, make sure `auth_file` is
+secured. Passwords are hashed with random salt, thus preimage attack is almost
+impossible, but it allows MitM attacker to gain `ClientKey`. If your threat
+model assumes that `auth_file` leaks and MitM occurs, your PgBouncer clients
+need to verify PgBouncer server with TLS.

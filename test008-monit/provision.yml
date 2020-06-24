@@ -1,0 +1,32 @@
+- hosts: default
+  become: yes
+
+  tasks:
+    - name: monit is installed
+      pkgng:
+        name: monit
+        state: present
+
+    - name: monitrc is up
+      copy:
+        src: monitrc
+        dest: /usr/local/etc/monitrc
+        mode: 0600
+      notify: reload monit
+
+    - name: monit service configuration is up
+      copy:
+        content: |
+          monit_enable="YES"
+        dest: /etc/rc.conf.d/monit
+
+    - name: monit is started
+      service:
+        name: monit
+        state: started
+
+  handlers:
+    - name: reload monit
+      service:
+        name: monit
+        state: reloaded

@@ -1,0 +1,15 @@
+set daemon 30
+  with start delay 300
+
+set log /var/log/monit.log
+
+check process sshd with pidfile /var/run/sshd.pid
+  start program = "/usr/sbin/service sshd start"
+  stop program = "/usr/sbin/service sshd stop"
+
+check filesystem root path /
+  if space usage > 90% then alert
+
+check system vagrant
+  if cpu usage > 95% for 10 cycles then alert
+  if memory usage > 75% for 10 cycles then alert

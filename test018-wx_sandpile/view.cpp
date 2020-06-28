@@ -10,12 +10,12 @@
 #include "view_event.h"
 
 
-static std::array<wxBrush const*, 5> const stateBrushes = {
-    wxGREY_BRUSH,
-    wxBLUE_BRUSH,
-    wxCYAN_BRUSH,
-    wxYELLOW_BRUSH,
-    wxRED_BRUSH
+static std::array<wxBrush, 5> const stateBrushes = {
+    wxBrush(wxColor{0x44, 0x01, 0x54}),
+    wxBrush(wxColor{0x3a, 0x52, 0x8b}),
+    wxBrush(wxColor{0x20, 0x91, 0x8c}),
+    wxBrush(wxColor{0x5e, 0xc9, 0x62}),
+    wxBrush(wxColor{0xfe, 0xe7, 0x24}),
 };
 
 static std::array<ResetEvent::Mode, 5> const resetChoices = {
@@ -157,7 +157,7 @@ View::onCanvasPaint(wxPaintEvent&)
             int const state = sandpile(x, y);
 
             auto const brushIndex = std::min(std::size_t(state), stateBrushes.size() - 1);
-            dc.SetBrush(*stateBrushes.at(brushIndex));
+            dc.SetBrush(stateBrushes.at(brushIndex));
 
             wxPoint const pos = {
                 _geometry.xpad + cellSpan * x,

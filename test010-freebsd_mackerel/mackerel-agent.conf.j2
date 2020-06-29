@@ -1,0 +1,21 @@
+apikey = "{{ mackerel_api_key }}"
+cloud_platform = "none"
+
+[filesystems]
+use_mountpoint = true
+
+[plugin.metrics.io]
+command = "/usr/local/etc/mackerel-agent/metrics-io.sh"
+
+[plugin.metrics.zfs]
+command = "/usr/local/etc/mackerel-agent/metrics-zfs.sh"
+
+[plugin.checks.system]
+command = "/usr/local/etc/mackerel-agent/check-system.sh"
+notification_interval = "24h"
+check_interval = "60m"
+
+[plugin.checks.packages]
+command = "/usr/local/etc/mackerel-agent/check-packages.sh"
+notification_interval = "24h"
+check_interval = "60m"

@@ -1,0 +1,73 @@
+- hosts: default
+  become: yes
+
+  tasks:
+    # mackerel-agent fails with unhelpful error message "API request failed:
+    # Invalid Parameter: obj.name error.minLength." when hostname is empty.
+    - name: hostname is set
+      hostname:
+        name: vagrant-test
+
+    # Fetch system update for check-system.sh plugin
+    - name: system update is fetched
+      command: freebsd-update fetch --not-running-from-cron
+
+    # Initialize vulnerability database for check-packages.sh plugin
+    - name: vulnerability database is up
+      command: pkg audit -F
+      failed_when: none
+
+    # mackerel-agent is not in quarterly release yet, so let us enable the
+    # Latest repository.
+    - name: pkgng repository directory exists
+      file:
+        path: /usr/local/etc/pkg/repos
+        state: directory
+
+    - name: pkgng latest repository is enabled
+      copy:
+        content: |
+          FreeBSD {
+            url: "pkg+http://pkg.FreeBSD.org/${ABI}/latest",
+          }
+        dest: /usr/local/etc/pkg/repos/FreeBSD.conf
+
+    - name: mackerel-agent is installed
+      pkgng:
+        name: mackerel-agent
+        state: present
+
+    - name: mackerel-agent configuration is up
+      template:
+        src: mackerel-agent.conf.j2
+        dest: /usr/local/etc/mackerel-agent/mackerel-agent.conf
+        mode: 0600
+      notify: restart mackerel-agent
+
+    - name: monitoring scripts are up
+      copy:
+        src: "{{ item }}"
+        dest: /usr/local/etc/mackerel-agent/
+        mode: 0700
+      with_items:
+        - metrics-io.sh
+        - metrics-zfs.sh
+        - check-system.sh
+        - check-packages.sh
+
+    - name: mackerel-agent service configuration is up
+      copy:
+        content: |
+          mackerel_agent_enable="YES"
+        dest: /etc/rc.conf.d/mackerel_agent
+
+    - name: mackerel-agent is started
+      service:
+        name: mackerel_agent
+        state: started
+
+  handlers:
+    - name: restart mackerel-agent
+      service:
+        name: mackerel_agent
+        state: restarted

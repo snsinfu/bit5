@@ -1,0 +1,19 @@
+VM_CPUS = 2
+VM_MEMORY = 512
+VM_BOX = "bento/freebsd-12.1"
+
+Vagrant.configure("2") do |config|
+  config.vm.provider :virtualbox do |v|
+    v.cpus = VM_CPUS
+    v.memory = VM_MEMORY
+  end
+
+  config.vm.box = VM_BOX
+  config.vm.provision :shell, inline: <<-END
+    pkg update -q
+    pkg install -qy python3
+  END
+  config.vm.provision :ansible do |ansible|
+    ansible.playbook = "provision.yml"
+  end
+end

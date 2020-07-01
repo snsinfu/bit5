@@ -15,6 +15,7 @@
     _canvas = document.getElementById("canvas");
     _canvas.width = 400;
     _canvas.height = 400;
+    _canvas.addEventListener("click", onCanvasClick);
 
     _vertices = new Int8Array(_rows * _cols);
     randomize();
@@ -26,23 +27,33 @@
     draw();
   }
 
+  function onCanvasClick(event) {
+    let {width, height, size, xMargin, yMargin} = calculateGeometry();
+    let x = Math.floor((event.clientX - xMargin) / size);
+    let y = Math.floor((event.clientY - yMargin) / size);
+
+    if (x < 0 || x >= _cols) {
+      return;
+    }
+    if (y < 0 || y >= _rows) {
+      return;
+    }
+
+    let idx = locate(x, y);
+    _vertices[idx]++;
+
+    draw();
+  }
+
   function draw() {
     let ctx = _canvas.getContext("2d");
-    let width = _canvas.width;
-    let height = _canvas.height;
+    let {width, height, size, xMargin, yMargin} = calculateGeometry();
 
     ctx.fillStyle = "black";
     ctx.fillRect(0, 0, width, height);
 
     ctx.lineWidth = 1;
     ctx.strokeStyle = "black";
-
-    let xSpace = width / _cols;
-    let ySpace = height / _rows;
-    let size = Math.min(xSpace, ySpace);
-
-    let xMargin = (width - xSpace * _cols) / 2;
-    let yMargin = (height - ySpace * _rows) / 2;
 
     for (let x = 0; x < _cols; x++) {
       for (let y = 0; y < _rows; y++) {
@@ -58,6 +69,26 @@
         ctx.strokeRect(xpos, ypos, xpos + size, ypos + size);
       }
     }
+  }
+
+  function calculateGeometry() {
+    let width = _canvas.width;
+    let height = _canvas.height;
+
+    let xSpace = width / _cols;
+    let ySpace = height / _rows;
+    let size = Math.min(xSpace, ySpace);
+
+    let xMargin = (width - size * _cols) / 2;
+    let yMargin = (height - size * _rows) / 2;
+
+    return {
+      width: width,
+      height: height,
+      size: size,
+      xMargin: xMargin,
+      yMargin: yMargin
+    };
   }
 
   function randomize() {

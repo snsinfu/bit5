@@ -1,0 +1,13 @@
+#!/bin/sh -eu
+
+render() {
+    ansible -c local -m debug -a msg="$2" "$1" |
+    jq -r ".plays[0].tasks[0].hosts | to_entries[0].value.msg | @text"
+}
+
+export ANSIBLE_LOAD_CALLBACK_PLUGINS=True
+export ANSIBLE_STDOUT_CALLBACK=json
+
+exec ssh \
+  -o UserKnownHostsFile=_known_hosts \
+  "$(render "$1" "{{ ansible_user }}@{{ ansible_host }}")"

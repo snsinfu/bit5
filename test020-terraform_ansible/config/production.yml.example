@@ -1,0 +1,22 @@
+infra:
+  # Specify S3 bucket where Terraform state is stored.
+  state_s3_region: ap-northeast-1
+  state_s3_bucket: YOUR BUCKET
+
+  # Terraform state will be stored as infra/test.tfstate. This can be used to
+  # switch S3 object key among different deployments like different staging
+  # versions.
+  state_s3_prefix: infra-v1
+
+  # Instance parameters for `test` server.
+  test:
+    hostname: test.example.com
+    location: hel1
+    server: cpx11
+    image: debian-10
+
+
+# Admin user used for Ansible deployment.
+admin_user: sinfu
+admin_ssh_pubkeys:
+  - ssh-ed25519 AAAAC3Nz...

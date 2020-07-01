@@ -1,0 +1,15 @@
+terraform_vars:
+  server_hostname: "{{ infra.test.hostname }}"
+  server_location: "{{ infra.test.location }}"
+  server_type: "{{ infra.test.server }}"
+  server_image: "{{ infra.test.image }}"
+  admin_user: "{{ admin_user }}"
+  # As of Ansible 2.9.9, the `variables` argument of terraform module takes
+  # a map of string to HCL-formatted data. JSON is valid HCL as long as map
+  # is not involved, so we can use to_json to encode array of strings here.
+  admin_ssh_pubkeys: "{{ admin_ssh_pubkeys | to_json }}"
+
+terraform_backend_config:
+  region: "{{ infra.state_s3_region }}"
+  bucket: "{{ infra.state_s3_bucket }}"
+  key: "{{ infra.state_s3_prefix }}/test-server.tfstate"

@@ -1,0 +1,33 @@
+- hosts: localhost
+  connection: local
+  become: no
+  gather_facts: no
+
+  vars_files:
+    - instance_vars.yml
+
+  tasks:
+
+    # I believe the use of `force_init` is safe (i.e., it does not create
+    # duplicating infra) because we use persistent S3 backend.
+    - name: infrastructure is up
+      terraform:
+        project_path: ./terraform
+        state: present
+        force_init: yes
+        variables: "{{ terraform_vars }}"
+        backend_config: "{{ terraform_backend_config }}"
+      register: tf
+
+    - name: server address is collected
+      set_fact:
+        server_addresses: "{{ tf.outputs.server_addresses.value }}"
+
+    - name: inventory is updated
+      copy:
+        content: |
+          [target]
+          {% for host, addr in server_addresses.items() %}
+          {{ host }} public_address={{ addr }}
+          {% endfor %}
+        dest: inventory/_10-instance

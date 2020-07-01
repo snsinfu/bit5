@@ -1,0 +1,21 @@
+- hosts: localhost
+  connection: local
+  become: no
+  gather_facts: no
+
+  vars_files:
+    - instance_vars.yml
+
+  tasks:
+    - name: infrastructure is down
+      terraform:
+        project_path: ./terraform
+        state: absent
+        variables: "{{ terraform_vars }}"
+        backend_config: "{{ terraform_backend_config }}"
+      register: tf
+
+    - name: inventory updates are absent
+      file:
+        path: inventory/_10-instance
+        state: absent

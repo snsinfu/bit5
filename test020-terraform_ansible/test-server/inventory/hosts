@@ -1,0 +1,6 @@
+[target]
+test
+
+[target:vars]
+ansible_user={{ admin_user }}
+ansible_host={{ public_address }}

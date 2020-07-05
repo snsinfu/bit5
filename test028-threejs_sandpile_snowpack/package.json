@@ -1,0 +1,12 @@
+{
+  "name": "test028-threejs_sandpile_snowpack",
+  "version": "1.0.0",
+  "main": "assets/index.js",
+  "license": "MIT",
+  "devDependencies": {
+    "snowpack": "~2.6.3"
+  },
+  "dependencies": {
+    "three": "~0.118.3"
+  }
+}

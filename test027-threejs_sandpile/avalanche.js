@@ -26,6 +26,10 @@ export class Avalanche {
   }
 
   add(x, y) {
+    if (this._particleCount >= this._maxParticles) {
+      return;
+    }
+
     // Allocate a new point.
     let idx = this._particleCount++;
     let posCur = this._positions.index(idx);

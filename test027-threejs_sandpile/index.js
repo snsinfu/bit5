@@ -3,11 +3,11 @@ import { GraphicalView } from "./view.js";
 
 
 const PARTICLE_COUNT = 10000;
-const MECHANICS_FPS = 10;
+const MECHANICS_FPS = 12;
 const TRANSITION_FPS = 60;
 const TICK_PER_SECOND = 1000;
-const GRID_WIDTH = 99;
-const GRID_HEIGHT = 99;
+const GRID_WIDTH = 71;
+const GRID_HEIGHT = 71
 
 
 document.addEventListener("DOMContentLoaded", _ => {
@@ -44,14 +44,13 @@ class App {
       this._view.transit(this._avalanche.positions);
       this._previousTransitTick = tick;
     }
-
     this._view.render();
   }
 
   update() {
     let centerX = (GRID_WIDTH / 2) | 0;
     let centerY = (GRID_HEIGHT / 2) | 0;
-    this._avalanche.step();
     this._avalanche.add(centerX, centerY);
+    this._avalanche.step();
   }
 };

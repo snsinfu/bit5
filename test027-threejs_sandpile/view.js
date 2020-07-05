@@ -7,6 +7,7 @@ const EASING_FACTOR = 0.3;
 
 const BOX_SIZE = 0.8;
 const FLOOR_COLOR = "#444444";
+const LIGHT_HEIGHT = 10;
 
 const CAMERA_FOV = 90;
 const CAMERA_NEAR = 1;
@@ -71,8 +72,8 @@ export class GraphicalView {
     }
 
     // Light.
-    var light = new THREE.PointLight(0xffffff, 1, 0, 2);
-    light.position.set(0, 10, 0);
+    var light = new THREE.PointLight(0xffffff, 1, 0);
+    light.position.set(0, LIGHT_HEIGHT, 0);
 
     // Floor plane.
     var floor = new THREE.Mesh(
@@ -81,8 +82,10 @@ export class GraphicalView {
         color: FLOOR_COLOR
       })
     );
+    floor.position.x = -BOX_SIZE / 2;
     floor.position.y = 1 - BOX_SIZE / 2;
-    floor.lookAt(light.position);
+    floor.position.z = BOX_SIZE / 2;
+    floor.lookAt(floor.position.x, LIGHT_HEIGHT, floor.position.z);
 
     // Make scene.
     this._scene = new THREE.Scene();

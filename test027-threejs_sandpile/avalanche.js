@@ -21,7 +21,7 @@ export class Avalanche {
       this._positions[cur + 2] = PLACEHOLDER_POINT[2];
     }
 
-    this._pile = new Int16Array(width * height * MAX_PILE);
+    this._pile = new Int32Array(width * height * MAX_PILE);
     this._pile.index = (x, y) => (x + y * width) * MAX_PILE;
   }
 
@@ -60,7 +60,7 @@ export class Avalanche {
             let idx = this._pile[pileCur + pileTop--];
             this._pile[pileCur]--;
 
-            // Handle boundary.
+            // Handle boundary. Move removed point to the placeholder position.
             if (x + dx < 0 || x + dx >= this._width ||
                 y + dy < 0 || y + dy >= this._height) {
               let posCur = this._positions.index(idx);

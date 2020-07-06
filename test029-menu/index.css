@@ -1,0 +1,90 @@
+body {
+  font-family: sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+#menu-open {
+  display: none;
+}
+
+label[role="button"] {
+  display: inline-block;
+  padding: 0.5ex 1.5ex;
+  cursor: pointer;
+  user-select: none;
+}
+
+label[for="menu-open"] {
+  background-color: #eee;
+  border: 2px outset black;
+  color: #222;
+}
+
+#menu-open:checked ~ label[for="menu-open"] {
+  background-color: #eecc80;
+  border: 2px inset black;
+}
+
+
+#menu {
+  display: none;
+  transform: none;
+  z-index: 11;
+}
+
+#menu-open:checked ~ #menu {
+  display: block;
+  width: 200px;
+}
+
+#menu {
+  position: relative;
+  top: 1px;
+}
+
+#menu > fieldset {
+  position: absolute;
+  border: 1px solid groove;
+  margin: 0;
+  padding: 0.5ex;
+  background-color: #eee;
+}
+
+#menu label,
+#menu input,
+#menu button {
+  display: block;
+  margin: 0.5ex 0 1ex 0;
+  width: 100%;
+}
+
+#menu > label {
+  margin-bottom: 0;
+}
+
+input, button {
+  padding: 0.5ex;
+}
+
+
+label[for="toggle"] {
+  border: 2px outset black;
+}
+
+#toggle {
+  display: none;
+}
+
+label[for="toggle"] {
+  border: 2px outset black;
+  background-color: #eee;
+}
+
+#toggle:checked ~ label[for="toggle"] {
+  border: 2px inset black;
+  background-color: #f98;
+}
+

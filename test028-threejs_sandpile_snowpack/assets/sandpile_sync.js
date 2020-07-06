@@ -2,7 +2,7 @@ const MAX_PILE = 16;
 const PLACEHOLDER_POINT = [0, 0, 20]
 
 
-export class Sandpile {
+export class SandpileSync {
   /*
    * Creates a sandpile system with given particle capacity and lattice size.
    */
@@ -32,6 +32,11 @@ export class Sandpile {
     // eliminates allocation in the hot loop in the `step` function.
     this._pile = new Int32Array(width * height * MAX_PILE);
     this._pile.index = (x, y) => (x + y * width) * MAX_PILE;
+
+    // Flattened 2D-array used to store lattice coordinates (x,y) where
+    // topplings should occur in `step` function.
+    this._toppledCells = new Int32Array((maxParticles + 3) / 4 | 0);
+    this._toppledCells.index = (idx) => 2 * idx;
   }
 
   /*
@@ -73,43 +78,55 @@ export class Sandpile {
         let pileCur = this._pile.index(x, y);
         let pileTop = this._pile[pileCur];
 
-        // Topple.
         if (pileTop >= 4) {
-          for (let k = 0; k < 4; k++) {
-            // k    0  1  2  3
-            // dx  -1 +1  0  0
-            // dy   0  0 -1 +1
-            let dx = (k < 2 ? -1 + 2 * k : 0);
-            let dy = (k < 2 ? 0 : -5 + 2 * k);
-
-            // Remove the top particle from the toppled cell.
-            let idx = this._pile[pileCur + pileTop--];
-            this._pile[pileCur]--;
-
-            // Handle boundary. Move removed point to the placeholder position.
-            if (x + dx < 0 || x + dx >= this._width ||
-                y + dy < 0 || y + dy >= this._height) {
-              let posCur = this._positions.index(idx);
-              this._positions[posCur + 0] = PLACEHOLDER_POINT[0] - this._offsetX;
-              this._positions[posCur + 1] = PLACEHOLDER_POINT[1] - this._offsetY;
-              this._positions[posCur + 2] = PLACEHOLDER_POINT[2];
-              continue;
-            }
-
-            // Append the removed particle to the side cell.
-            let sidePileCur = this._pile.index(x + dx, y + dy);
-            let sidePileTop = ++this._pile[sidePileCur];
-            this._pile[sidePileCur + sidePileTop] = idx;
-
-            // Adjust the position of the particle. The particle goes to the
-            // top of the side cell.
-            let posCur = this._positions.index(idx);
-            this._positions[posCur + 0] = x + dx - this._offsetX;
-            this._positions[posCur + 1] = y + dy - this._offsetY;
-            this._positions[posCur + 2] = sidePileTop;
-          }
+          this._toppledCells[topplings * 2 + 0] = x;
+          this._toppledCells[topplings * 2 + 1] = y;
           topplings++;
         }
+      }
+    }
+
+    // Actually apply topplings.
+    for (let i = 0; i < topplings; i++) {
+      let x = this._toppledCells[i * 2 + 0];
+      let y = this._toppledCells[i * 2 + 1];
+
+      // Check the number of particles in the cell at (x, y).
+      let pileCur = this._pile.index(x, y);
+      let pileTop = this._pile[pileCur];
+
+      for (let k = 0; k < 4; k++) {
+        // k    0  1  2  3
+        // dx  -1 +1  0  0
+        // dy   0  0 -1 +1
+        let dx = (k < 2 ? -1 + 2 * k : 0);
+        let dy = (k < 2 ? 0 : -5 + 2 * k);
+
+        // Remove the top particle from the toppled cell.
+        let idx = this._pile[pileCur + pileTop--];
+        this._pile[pileCur]--;
+
+        // Handle boundary. Move removed point to the placeholder position.
+        if (x + dx < 0 || x + dx >= this._width ||
+            y + dy < 0 || y + dy >= this._height) {
+          let posCur = this._positions.index(idx);
+          this._positions[posCur + 0] = PLACEHOLDER_POINT[0] - this._offsetX;
+          this._positions[posCur + 1] = PLACEHOLDER_POINT[1] - this._offsetY;
+          this._positions[posCur + 2] = PLACEHOLDER_POINT[2];
+          continue;
+        }
+
+        // Append the removed particle to the side cell.
+        let sidePileCur = this._pile.index(x + dx, y + dy);
+        let sidePileTop = ++this._pile[sidePileCur];
+        this._pile[sidePileCur + sidePileTop] = idx;
+
+        // Adjust the position of the particle. The particle goes to the
+        // top of the side cell.
+        let posCur = this._positions.index(idx);
+        this._positions[posCur + 0] = x + dx - this._offsetX;
+        this._positions[posCur + 1] = y + dy - this._offsetY;
+        this._positions[posCur + 2] = sidePileTop;
       }
     }
 

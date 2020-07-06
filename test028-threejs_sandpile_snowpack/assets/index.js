@@ -1,4 +1,5 @@
-import { Sandpile } from "./sandpile.js";
+import { SandpileSync } from "./sandpile_sync.js";
+import { SandpileRugged } from "./sandpile_rugged.js";
 import { GraphicalView } from "./view.js";
 
 
@@ -13,7 +14,7 @@ const LATTICE_HEIGHT = 71
 document.addEventListener("DOMContentLoaded", _ => {
   let viewport = document.querySelector("#viewport");
   let view = new GraphicalView(viewport, PARTICLE_COUNT, LATTICE_WIDTH, LATTICE_HEIGHT);
-  let sandpile = new Sandpile(PARTICLE_COUNT, LATTICE_WIDTH, LATTICE_HEIGHT);
+  let sandpile = new SandpileSync(PARTICLE_COUNT, LATTICE_WIDTH, LATTICE_HEIGHT);
   let app = new App(sandpile, view);
   app.start();
 });

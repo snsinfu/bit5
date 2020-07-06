@@ -5,7 +5,7 @@ import { TrackballControls } from "three/examples/jsm/controls/TrackballControls
 const TOPPLING_START_Z = 5;
 const EASING_FACTOR = 0.3;
 
-const BOX_SIZE = 0.8;
+const BOX_SIZE = 0.9;
 const FLOOR_COLOR = "#444444";
 const LIGHT_HEIGHT = 10;
 

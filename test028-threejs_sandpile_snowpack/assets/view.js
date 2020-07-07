@@ -9,7 +9,7 @@ const BOX_SIZE = 0.9;
 const FLOOR_COLOR = "#444444";
 const LIGHT_HEIGHT = 10;
 
-const CAMERA_FOV = 90;
+const CAMERA_FOV = 70;
 const CAMERA_NEAR = 1;
 const CAMERA_FAR = 1000;
 const CAMERA_POSITION = [10, 10, 10];
@@ -109,6 +109,14 @@ export class GraphicalView {
   }
 
   /*
+   * .
+   */
+  destroy() {
+    let dom = this._renderer.domElement;
+    dom.parentNode.removeChild(dom);
+  }
+
+  /*
    * Renders the view.
    */
   render() {
@@ -161,6 +169,7 @@ export class GraphicalView {
     let height = this._viewport.clientHeight - 3;
     this._renderer.setSize(width, height);
     this._camera.aspect = width / height;
+    this._camera.updateProjectionMatrix();
     this.render();
   }
 }

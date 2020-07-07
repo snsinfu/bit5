@@ -4,6 +4,10 @@ html, body {
   min-height: 100%;
 }
 
+* {
+  box-sizing: border-box;
+}
+
 body {
   display: flex;
   flex-direction: column;
@@ -21,7 +25,7 @@ body {
 }
 
 #app h1 {
-  margin: 1em 0 0 0;
+  margin: 1em 0;
   text-align: center;
   line-height: 100%;
   font-size: 200%;
@@ -32,6 +36,97 @@ body {
   flex: auto;
   display: flex;
   flex-direction: column;
-  margin: 20px 50px;
+  margin: 20px 30px;
   padding: 0;
+}
+
+/* Controls --------------------------------------------------------------- */
+
+#app nav {
+  margin: 0 30px;
+}
+
+/*
+ * Buttons
+ */
+
+input.hidden {
+  display: none;
+}
+
+label[role="button"] {
+  display: inline-block;
+  margin: 0;
+  padding: 1ex 2ex;
+  cursor: pointer;
+  user-select: none;
+  text-align: center;
+}
+
+#config-toggle ~ label[for="config-toggle"] {
+  background-color: #000;
+  border: 1px outset #888;
+  color: #fff;
+}
+
+#config-toggle:checked ~ label[for="config-toggle"] {
+  background-color: #c60;
+  border-style: inset;
+}
+
+#run-toggle ~ label[for="run-toggle"] {
+  background-color: #000;
+  border: 1px outset #888;
+  color: #fff;
+}
+
+#run-toggle:checked ~ label[for="run-toggle"] {
+  background-color: #c00;
+  border-style: inset;
+}
+
+/*
+ * Config menu
+ */
+
+#config-menu {
+  display: none;
+  z-index: 10;
+  position: relative;
+  top: 1px;
+}
+
+#config-toggle:checked ~ #config-menu {
+  display: block;
+  width: 250px;
+}
+
+#config-menu > ol {
+  list-style-type: none;
+  display: block;
+  position: absolute;
+  border: 1px groove #888;
+  margin: 0;
+  padding: 1ex 2ex;
+  background-color: #eee;
+}
+
+#config-menu li {
+  margin: 1ex 0;
+  padding: 0;
+}
+
+#config-menu hr {
+  border: none;
+  border-top: 1px groove #444;
+  margin: 2ex 0;
+}
+
+#config-menu label,
+#config-menu input,
+#config-menu button {
+  display: block;
+  margin: 0.5ex 0;
+  padding: 0.2ex;
+  width: 100%;
 }

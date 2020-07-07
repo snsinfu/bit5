@@ -11,6 +11,38 @@
   <body>
     <main id="app">
       <h1>Sandpile</h1>
+
+      <nav>
+        <input id="config-toggle" type="checkbox" class="hidden">
+        <label for="config-toggle" role="button">Configure</label>
+
+        <input id="run-toggle" type="checkbox" class="hidden">
+        <label for="run-toggle" role="button">Run</label>
+
+        <div id="config-menu" class="menu-box">
+          <ol>
+            <li>
+              <label for="config-particles">Particles</label>
+              <input id="config-particles" type="number">
+            </li>
+            <li>
+              <label for="config-size">Size</label>
+              <input id="config-size" type="number">
+            </li>
+            <li>
+              <label for="config-fps">FPS</label>
+              <input id="config-fps" type="number">
+            </li>
+            <li>
+              <hr>
+            </li>
+            <li>
+              <button id="config-apply">Restart</button>
+            </li>
+          </ol>
+        </div>
+      </nav>
+
       <div id="viewport"></div>
     </main>
   </body>

@@ -140,4 +140,12 @@ export class SandpileSync {
   get positions() {
     return this._positions.slice(0, this._particleCount * 3);
   }
+
+  get width() {
+    return this._width;
+  }
+
+  get height() {
+    return this._width;
+  }
 }

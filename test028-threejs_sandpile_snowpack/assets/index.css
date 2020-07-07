@@ -86,6 +86,30 @@ label[role="button"] {
 }
 
 /*
+ * FPS slider
+ */
+fieldset.slider {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+
+  margin: 0;
+  padding: 1ex 2ex;
+
+  background-color: #000;
+  border: 1px groove #888;
+  color: #fff;
+}
+
+fieldset.slider > input[type="range"] {
+  margin: 0 1ex;
+}
+
+#fps {
+  height: 1em;
+}
+
+/*
  * Config menu
  */
 

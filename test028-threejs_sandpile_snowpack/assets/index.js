@@ -5,32 +5,37 @@ import { InputControls } from "./input_controls.js";
 
 
 const TRANSITION_FPS = 60;
+const DEFAULT_MECHANICS_FPS = 12;
 const TICK_PER_SECOND = 1000;
 
 const DEFAULT_CONFIG = {
   particleCount: 20000,
-  latticeSize: 71,
-  mechanicsFPS: 12
+  latticeSize: 71
 };
 
 var _app;
+var _inputs;
 
 
 document.addEventListener("DOMContentLoaded", _ => {
-  let inputs = new InputControls(window);
+  _inputs = new InputControls(window);
+  _inputs.setConfig(DEFAULT_CONFIG);
+  _inputs.setRunning(true);
+  _inputs.setFPS(DEFAULT_MECHANICS_FPS);
 
   window.addEventListener("app:changeConfig", event => {
-    let config = event.detail;
-    resetApp(config);
+    resetApp(event.detail);
+  });
+
+  window.addEventListener("app:changeFPS", event => {
+    let {fps} = event.detail;
+    _app.setMechanicsFPS(fps);
   });
 
   window.addEventListener("app:pause", _ => _app.pause());
   window.addEventListener("app:start", _ => _app.start());
 
-  resetApp(DEFAULT_CONFIG);
-
-  inputs.setConfig(DEFAULT_CONFIG);
-  inputs.setRunning(true);
+  resetApp(_inputs.getConfig());
 });
 
 
@@ -42,8 +47,12 @@ function resetApp(config) {
   let viewport = document.querySelector("#viewport");
   let view = new GraphicalView(viewport, config.particleCount, config.latticeSize, config.latticeSize);
   let sandpile = new SandpileSync(config.particleCount, config.latticeSize, config.latticeSize);
-  _app = new App(sandpile, view, config.mechanicsFPS);
-  _app.start();
+  _app = new App(sandpile, view);
+
+  _app.setMechanicsFPS(_inputs.getFPS());
+  if (_inputs.getRunning()) {
+    _app.start();
+  }
 }
 
 
@@ -53,14 +62,14 @@ const STATE_DESTROYED = 2;
 
 
 class App {
-  constructor(sandpile, view, fps) {
+  constructor(sandpile, view) {
     this._sandpile = sandpile;
     this._view = view;
     this._previousUpdateTick = performance.now();
     this._previousTransitTick = performance.now();
     this._state = STATE_PAUSED;
-    this._mechanicsFPS = fps;
-    this.update();
+    this._mechanicsFPS = DEFAULT_MECHANICS_FPS;
+    this._view.render();
   }
 
   start() {
@@ -75,6 +84,10 @@ class App {
   destroy() {
     this._state = STATE_DESTROYED;
     this._view.destroy();
+  }
+
+  setMechanicsFPS(fps) {
+    this._mechanicsFPS = fps;
   }
 
   animate(tick) {

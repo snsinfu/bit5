@@ -19,6 +19,12 @@
         <input id="run-toggle" type="checkbox" class="hidden">
         <label for="run-toggle" role="button">Run</label>
 
+        <fieldset class="slider">
+          <label for="fps">FPS</label>
+          <input id="fps" type="range" value="12" min="1" max="60" step="1">
+          <label for="fps" id="fps-view"></label>
+        </fieldset>
+
         <div id="config-menu" class="menu-box">
           <ol>
             <li>
@@ -28,10 +34,6 @@
             <li>
               <label for="config-size">Size</label>
               <input id="config-size" type="number">
-            </li>
-            <li>
-              <label for="config-fps">FPS</label>
-              <input id="config-fps" type="number">
             </li>
             <li>
               <hr>

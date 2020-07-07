@@ -2,8 +2,8 @@ import * as THREE from "three";
 import { TrackballControls } from "three/examples/jsm/controls/TrackballControls.js";
 
 
-const TOPPLING_START_Z = 5;
-const EASING_FACTOR = 0.3;
+const TOPPLING_START_Z = 4.5;
+const EASING_FACTOR = 0.4;
 
 const BOX_SIZE = 0.9;
 const FLOOR_COLOR = "#444444";

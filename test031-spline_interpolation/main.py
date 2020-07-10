@@ -23,8 +23,8 @@ def spline(x, y):
         return (d1 - d2) / (x[i + 1] - x[i - 1])
 
     A = [None] + [mu(i) for i in range(1, n - 1)] + [0]
-    B = [2] * n
-    C = [1] + [lam(i) for i in range(1, n - 1)] + [None]
+    B = [1] + [2] * (n - 2) + [1]
+    C = [0] + [lam(i) for i in range(1, n - 1)] + [None]
     D = [0] + [6 * double_diff(i) for i in range(1, n - 1)] + [0]
 
     # https://en.wikipedia.org/wiki/Tridiagonal_matrix_algorithm

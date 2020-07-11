@@ -10,18 +10,15 @@
 
 int main()
 {
-    // Define the input points
+    std::vector<double> const t = {0, 1, 2, 3, 4, 5};
+    std::vector<double> const x = {1, 2, 3, 2, 1, 2};
 
-    std::vector<vec> const points = {
-        { 0, 0, 0 },
-        { 1, 0, 0 },
-        { 0, 1, 0 },
-        { 0, 0, 1 }
-    };
-    std::vector<double> const chord = {
-        0, 1, 2, 3
-    };
-    assert(points.size() == chord.size());
+    auto const spline = cubic_spline(t, x);
 
-    //
+    std::vector<double> const sampling_t = {
+        0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 5.5
+    };
+    for (auto const st : sampling_t) {
+        std::cout << st << '\t' << spline(st) << '\n';
+    }
 }

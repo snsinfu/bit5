@@ -2,9 +2,13 @@
 #pragma once
 
 #include <cassert>
+#include <cstddef>
 #include <vector>
 
 
+/*
+ * Cubic spline function that interpolates one-dimensional knots.
+ */
 class cubic_spline
 {
     static constexpr int order = 3;
@@ -16,7 +20,10 @@ class cubic_spline
 
 public:
     /*
-     * Constructs a cubic spline function that passes through given points.
+     * Constructs a cubic spline function that passes through given knots.
+     *
+     * @param t     Specify knot points. This must be sorted.
+     * @param x     Specify values at the knot points.
      */
     cubic_spline(std::vector<double> const& t, std::vector<double> const& x);
 
@@ -32,65 +39,88 @@ private:
     std::vector<spline_data> _splines;
 };
 
+namespace detail_cubic_spline {
+    /*
+     * Solves a tridiagonal system of equations. This function clobbers given
+     * coefficient vectors.
+     */
+    void solve_tridiagonal_system(
+        std::vector<double>& lower,
+        std::vector<double>& diag,
+        std::vector<double>& upper,
+        std::vector<double>& rhs,
+        std::vector<double>& solution
+    );
+}
 
 inline
-cubic_spline::cubic_spline(std::vector<double> const& t, std::vector<double> const& x)
+cubic_spline::cubic_spline(
+    std::vector<double> const& knots,
+    std::vector<double> const& values
+)
 {
-    using index_t = std::vector<spline_data>::size_type;
+    assert(knots.size() == values.size());
 
-    assert(t.size() == x.size());
-    assert(t.size() >= 2);
+    auto const n_knots = knots.size();
+    auto const n_segments = n_knots - 1;
 
-    index_t const n = t.size();
+    std::vector<double> intervals(n_segments);
+    std::vector<double> slopes(n_segments);
 
-    std::vector<double> a = x;
-    std::vector<double> b(n);
-    std::vector<double> c(n);
-    std::vector<double> d(n);
-
-    std::vector<double> alpha(n);
-    std::vector<double> lambda(n);
-    std::vector<double> mu(n);
-    std::vector<double> zeta(n);
-
-    for (index_t i = 1; i < n - 1; i++) {
-        auto const dx1 = x[i + 1] - x[i];
-        auto const dt1 = t[i + 1] - t[i];
-        auto const dx2 = x[i] - x[i - 1];
-        auto const dt2 = t[i] - t[i - 1];
-        alpha[i] = 3 * (dx1 / dt1 - dx2 / dt2);
+    for (std::size_t i = 0; i < n_segments; i++) {
+        auto const dt = knots[i + 1] - knots[i];
+        auto const dx = values[i + 1] - values[i];
+        intervals[i] = dt;
+        slopes[i] = dx / dt;
     }
 
-    lambda[0] = lambda[n - 1] = 1;
+    // Let M[i] be the second derivative of the i-th spline at the i-th knot,
+    // i = 0,...,n-1 where n is the number of knots. The vector M is given by
+    // a tridiagonal system of equations:
+    //
+    // [ D[0] U[0]                      ] [ M[0]   ]   [ Y[0]   ]
+    // [ L[1] D[1] U[1]                 ] [ M[1]   ]   [ Y[1]   ]
+    // [      L[2] D[2] U[2]            ] [ M[2]   ]   [ Y[2]   ]
+    // [      ...  ...  ...             ] [   :    ] = [   :    ]
+    // [           L[n-2] D[n-2] U[n-2] ] [ M[n-2] ]   [ Y[n-2] ]
+    // [                  L[n-1] D[n-1] ] [ M[n-1] ]   [ Y[n-1] ]
+    //
+    // We calculate the coefficients L, D, U and Y below.
 
-    for (index_t i = 1; i < n - 1; i++) {
-        auto const dt1 = t[i + 1] - t[i];
-        auto const dt2 = t[i] - t[i - 1];
-        lambda[i] = 2 * (dt1 + dt2) - dt2 * mu[i - 1];
-        mu[i] = dt1 / lambda[i];
-        zeta[i] = (alpha[i] - dt2 * zeta[i - 1]) / lambda[i];
+    std::vector<double> L(n_segments + 1);
+    std::vector<double> D(n_segments + 1);
+    std::vector<double> U(n_segments + 1);
+    std::vector<double> Y(n_segments + 1);
+    std::vector<double> M(n_segments + 1);
+
+    D[0] = 1;
+    D[n_knots - 1] = 1;
+
+    for (std::size_t i = 1; i < n_segments; i++) {
+        L[i] = intervals[i - 1];
+        D[i] = 2 * (intervals[i - 1] + intervals[i]);
+        U[i] = intervals[i];
+        Y[i] = 6 * (slopes[i] - slopes[i - 1]);
     }
 
-    for (index_t i_plus = n - 1; i_plus > 0; i_plus--) {
-        index_t const i = i_plus - 1;
+    detail_cubic_spline::solve_tridiagonal_system(L, D, U, Y, M);
 
-        auto const dx = x[i + 1] - x[i];
-        auto const dt = t[i + 1] - t[i];
+    assert(M[0] == 0);
+    assert(M[n_segments] == 0);
 
-        c[i] = zeta[i] - mu[i] * c[i + 1];
-        b[i] = dx / dt - dt * (c[i + 1] + 2 * c[i]) / 3;
-        d[i] = (c[i + 1] - c[i]) / dt;
-    }
+    // Derive the polynomial coefficients of each spline segment from the
+    // second derivatives we obtained.
 
-    for (index_t i = 0; i < n - 1; i++) {
+    for (std::size_t i = 0; i < n_segments; i++) {
         spline_data spline;
-        spline.knot = t[i];
-        spline.coefficients[0] = a[i];
-        spline.coefficients[1] = b[i];
-        spline.coefficients[2] = c[i];
-        spline.coefficients[3] = d[i];
+        spline.knot = knots[i];
+        spline.coefficients[0] = values[i];
+        spline.coefficients[1] = slopes[i] - (M[i + 1] + 2 * M[i]) * intervals[i] / 6;
+        spline.coefficients[2] = M[i] / 2;
+        spline.coefficients[3] = (M[i + 1] - M[i]) / (6 * intervals[i]);
         _splines.push_back(spline);
     }
+
     _splines.shrink_to_fit();
 }
 
@@ -100,7 +130,6 @@ cubic_spline::operator()(double t) const
     auto const& spline = find_spline(t);
 
     auto value = spline.coefficients[order];
-
     for (int i = order - 1; i >= 0; i--) {
         value *= t - spline.knot;
         value += spline.coefficients[i];
@@ -112,13 +141,45 @@ cubic_spline::operator()(double t) const
 inline cubic_spline::spline_data const&
 cubic_spline::find_spline(double t) const
 {
-    using index_t = std::vector<spline_data>::size_type;
+    // FIXME: Inefficient.
 
-    index_t index = 0;
+    std::size_t index = 0;
     for (; index + 1 < _splines.size(); index++) {
         if (t < _splines[index + 1].knot) {
             break;
         }
     }
     return _splines[index];
+}
+
+inline void
+detail_cubic_spline::solve_tridiagonal_system(
+    std::vector<double>& lower,
+    std::vector<double>& diag,
+    std::vector<double>& upper,
+    std::vector<double>& rhs,
+    std::vector<double>& solution
+)
+{
+    // See: https://en.wikipedia.org/wiki/Tridiagonal_matrix_algorithm
+
+    std::size_t const dim = rhs.size();
+
+    assert(lower.size() == dim);
+    assert(diag.size() == dim);
+    assert(upper.size() == dim);
+    assert(solution.size() == dim);
+
+    for (std::size_t i = 1; i < dim; i++) {
+        auto const w = lower[i] / diag[i - 1];
+        diag[i] -= w * upper[i - 1];
+        rhs[i] -= w * rhs[i - 1];
+    }
+
+    solution[dim - 1] = rhs[dim - 1] / diag[dim - 1];
+
+    for (std::size_t i_plus = dim; i_plus > 0; i_plus--) {
+        auto const i = i_plus - 1;
+        solution[i] = (rhs[i] - upper[i] * solution[i + 1]) / diag[i];
+    }
 }

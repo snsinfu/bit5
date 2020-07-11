@@ -15,3 +15,8 @@ run: main
 
 clean:
 	rm -f main
+
+main: main.cc
+	$(CXX) $(CXXFLAGS) -o $@ $< $(LDFLAGS)
+
+main: spline.hpp

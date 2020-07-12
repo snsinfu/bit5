@@ -37,6 +37,10 @@ private:
 
 private:
     std::vector<spline_data> _splines;
+    std::vector<std::size_t> _bins;
+    double _lower_bound;
+    double _upper_bound;
+    double _bin_interval;
 };
 
 namespace detail_cubic_spline {
@@ -122,6 +126,29 @@ cubic_spline::cubic_spline(
     }
 
     _splines.shrink_to_fit();
+
+    // Build a bin-based index to quickly find a spline segment for given point.
+    _lower_bound = knots.front();
+    _upper_bound = knots.back();
+    _bin_interval = (_upper_bound - _lower_bound) / double(n_segments);
+
+    std::size_t index = 0;
+
+    for (int bin = 0; ; bin++) {
+        auto const bin_edge = _lower_bound + _bin_interval * bin;
+
+        while (index + 1 < _splines.size() && _splines[index + 1].knot <= bin_edge) {
+            index++;
+        }
+
+        _bins.push_back(index);
+
+        if (index + 1 == _splines.size()) {
+            break;
+        }
+    }
+
+    _bins.shrink_to_fit();
 }
 
 inline double
@@ -141,14 +168,24 @@ cubic_spline::operator()(double t) const
 inline cubic_spline::spline_data const&
 cubic_spline::find_spline(double t) const
 {
-    // FIXME: Inefficient.
+    if (t <= _lower_bound) {
+        return _splines.front();
+    }
+    if (t >= _upper_bound) {
+        return _splines.back();
+    }
 
-    std::size_t index = 0;
+    std::size_t bin = std::size_t((t - _lower_bound) / _bin_interval);
+    std::size_t index = _bins[bin];
+
+    assert(t >= _splines[index].knot);
+
     for (; index + 1 < _splines.size(); index++) {
         if (t < _splines[index + 1].knot) {
             break;
         }
     }
+
     return _splines[index];
 }
 

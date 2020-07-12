@@ -75,15 +75,15 @@ cubic_spline::cubic_spline(
     }
 
     // Let M[i] be the second derivative of the i-th spline at the i-th knot,
-    // i = 0,...,n-1 where n is the number of knots. The vector M is given by
+    // i = 0,...,n where n is the number of segments. The vector M is given by
     // a tridiagonal system of equations:
     //
     // [ D[0] U[0]                      ] [ M[0]   ]   [ Y[0]   ]
     // [ L[1] D[1] U[1]                 ] [ M[1]   ]   [ Y[1]   ]
     // [      L[2] D[2] U[2]            ] [ M[2]   ]   [ Y[2]   ]
     // [      ...  ...  ...             ] [   :    ] = [   :    ]
-    // [           L[n-2] D[n-2] U[n-2] ] [ M[n-2] ]   [ Y[n-2] ]
-    // [                  L[n-1] D[n-1] ] [ M[n-1] ]   [ Y[n-1] ]
+    // [           L[n-1] D[n-1] U[n-1] ] [ M[n-1] ]   [ Y[n-1] ]
+    // [                  L[n]   D[n]   ] [ M[n]   ]   [ Y[n]   ]
     //
     // We calculate the coefficients L, D, U and Y below.
 
@@ -94,7 +94,7 @@ cubic_spline::cubic_spline(
     std::vector<double> M(n_segments + 1);
 
     D[0] = 1;
-    D[n_knots - 1] = 1;
+    D[n_segments] = 1;
 
     for (std::size_t i = 1; i < n_segments; i++) {
         L[i] = intervals[i - 1];

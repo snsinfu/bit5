@@ -18,8 +18,12 @@ oscillate, but how this three-state and indirect setting affect the oscillation?
                +--> mA ---------------+
 ```
 
-Hand-tweaked a bit but I couldn't find a set of parameters that causes
-oscillation. Anyway, the trajectory converges to a probable attractor.
-See the sort-of-interesting trajectory plot below.
+When the interaction agents are involved in the master equation linearly, the
+trajectory is not that interesting. The system just converges to an attractor.
 
-![trajectory](trajectory.png)
+![Trajectory when interaction is linear](trajectory_linear.png)
+
+However, if the interaction is non-linear, as seen in the `activation` function
+in [the source code](main.c), the system starts oscillating! Interesting.
+
+![Trajectory when interaction is non-linear](trajectory_cyclic.png)

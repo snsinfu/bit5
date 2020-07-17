@@ -70,7 +70,7 @@ int main(void)
         .k_constraint      = 0,
 
         .timestep          = 1e-4,
-        .simulation_steps  = 1000000,
+        .simulation_steps  = 1500000,
         .sampling_interval = 100,
         .logging_interval  = 10000
     };
@@ -121,6 +121,14 @@ void save_sample(long step, struct state const *state)
     );
 }
 
+static double activation(double x)
+{
+    double u1 = x / 0.5;
+    double u2 = u1 * u1;
+    double u4 = u2 * u2;
+    return u4 / (1 + u4);
+}
+
 void simulate_step(struct state *state, struct config const *config)
 {
     // State transitions of A.
@@ -128,12 +136,12 @@ void simulate_step(struct state *state, struct config const *config)
     double F_A_off =
         - config->k_A_off_to_on * state->A_off
         + config->k_A_on_to_off * state->A_on
-        + config->k_mB_closes_A * state->A_on * state->mB;
+        + config->k_mB_closes_A * state->A_on * activation(state->mB);
 
     double F_A_on =
         + config->k_A_off_to_on * state->A_off
         - config->k_A_on_to_off * state->A_on
-        - config->k_mB_closes_A * state->A_on * state->mB
+        - config->k_mB_closes_A * state->A_on * activation(state->mB)
         - config->k_A_on_to_active * state->A_on
         + config->k_A_active_to_on * state->A_active;
 
@@ -155,12 +163,12 @@ void simulate_step(struct state *state, struct config const *config)
         + config->k_B_off_to_on * state->B_off
         - config->k_B_on_to_off * state->B_on
         - config->k_B_on_to_active * state->B_on
-        - config->k_mA_activates_B * state->B_on * state->mA
+        - config->k_mA_activates_B * state->B_on * activation(state->mA)
         + config->k_B_active_to_on * state->B_active;
 
     double F_B_active =
         + config->k_B_on_to_active * state->B_on
-        + config->k_mA_activates_B * state->B_on * state->mA
+        + config->k_mA_activates_B * state->B_on * activation(state->mA)
         - config->k_B_active_to_on * state->B_active;
 
     double F_mB =

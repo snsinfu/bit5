@@ -1,0 +1,5 @@
+[nodes]
+athena
+hermes      public_address=172.25.10.154
+iris        public_address=172.25.11.35
+perseus

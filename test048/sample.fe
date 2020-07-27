@@ -1,0 +1,15 @@
+y = 0
+repeat 600
+    x = 0
+    repeat 400
+        r = x + y
+        g = x - y
+        b = y - x
+        color r, g, b
+        dot x, y
+        x += 1
+    next
+    y += 1
+next
+
+end

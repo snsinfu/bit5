@@ -1,0 +1,22 @@
+{
+    "reactants": 4,
+
+    "transitions": [
+        {"reactant": 0, "product": 1, "rate": 0.12},
+        {"reactant": 1, "product": 2, "rate": 0.23},
+        {"reactant": 2, "product": 0, "rate": 0.34}
+    ],
+
+    "mediated_transitions": [
+        {"mediator": 1, "reactant": 0, "product": 1, "threshold": 0.1, "rate": 0.20},
+        {"mediator": 3, "reactant": 2, "product": 0, "threshold": 0.1, "rate": 0.90}
+    ],
+
+    "generations": [
+        {"source": 2, "product": 3, "rate": 0.20}
+    ],
+
+    "decays": [
+        {"reactant": 3, "rate": 0.20}
+    ]
+}

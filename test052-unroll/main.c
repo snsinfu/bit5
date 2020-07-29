@@ -91,19 +91,20 @@
 // Lastly, I need to get x(i) for i > 3p.
 
 
+void compute_rolling_sum(int const *values, int *sums, size_t size);
+
 int main()
 {
-    enum {
-        size = 9
-    };
-
-    int const truth[size] = {
+    int const truth[] = {
         0, 1, 0, 0, 1, 1, 0, 1, 0
     };
 
-    int const rolling_sums[size] = {
-        1, 1, 1, 1, 2, 2, 2, 1, 1
+    enum {
+        size = sizeof truth / sizeof *truth
     };
+
+    int rolling_sums[size];
+    compute_rolling_sum(truth, rolling_sums, size);
 
     int solution[size] = { 0 };
 
@@ -127,5 +128,20 @@ int main()
     puts("i\ttruth\tsolution");
     for (size_t i = 0; i < size; i++) {
         printf("%zu\t%d\t%d\n", i, truth[i], solution[i]);
+    }
+}
+
+void compute_rolling_sum(int const *values, int *sums, size_t size)
+{
+    for (size_t i = 0; i < size; i++) {
+        sums[i] = values[i];
+
+        if (i > 0) {
+            sums[i] += values[i - 1];
+        }
+
+        if (i + 1 < size) {
+            sums[i] += values[i + 1];
+        }
     }
 }

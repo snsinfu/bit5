@@ -39,7 +39,43 @@
 // Not so much I gained it seems.
 //
 
+// With
+//
+//   x(2) = r(1) - r(0)
+//
+// I can create the rolling sum of the sub-seqeuence x(3:):
+//
+//   R(0) = r(3) - x(2) = x(3) + x(4)
+//   R(1) = r(4)        = x(3) + x(4) + x(5)
+//   R(2) = r(5)        =        x(4) + x(5) + x(6)
+//
+// Now I can compute another truth:
+//
+//   x(5) = R(1) - R(0)
+//        = r(4) - r(3) + x(2) .
+//
+// Similarly I get x(2), x(5), x(8), x(11), ...
 
+// For i = 0 and 1 the input gives
+//
+//   r(0) = x(0) + x(1)
+//   r(1) = x(0) + x(1) + x(2)
+//   r(2) =        x(1) + x(2) + x(3)
+//
+// and I can use x(2) to get
+//
+//   r(0)        = x(0) + x(1)
+//   r(1) - x(2) = x(0) + x(1)
+//   r(2) - x(2) =        x(1) + x(3) .
+//
+// This system of equations is solvable once I get x(3). However, to get x(3):
+//
+//   r(3) - x(2) = x(3) + x(4)
+//   r(4) - x(5) = x(3) + x(4)
+//   r(5) - x(5) =        x(4) + x(6)
+//
+// I need x(6).
+//
 
 
 int main()
@@ -56,15 +92,18 @@ int main()
         1, 1, 1, 1, 2, 2, 2, 1, 1
     };
 
-    int rolling_cumsums[size];
+    int solution[size] = { 0 };
 
-    for (size_t i = 0; i < size; i++) {
-        rolling_cumsums[i] = 0;
-        for (size_t j = 0; j <= i; j++) {
-            rolling_cumsums[i] += rolling_sums[j];
-        }
+    // Derive truth[i] for i = 2, 5, 8, ...
+    int x = 0;
+
+    for (size_t i = 2; i < size; i += 3) {
+        x = rolling_sums[i - 1] - rolling_sums[i - 2] + x;
+        solution[i] = x;
     }
 
-    int x2 = rolling_sums[1] - rolling_sums[0];
-    printf("%d\n", x2);
+    puts("i\ttruth\tsolution");
+    for (size_t i = 0; i < size; i++) {
+        printf("%zu\t%d\t%d\n", i, truth[i], solution[i]);
+    }
 }

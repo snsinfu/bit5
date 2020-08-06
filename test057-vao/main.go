@@ -5,7 +5,7 @@ import (
 	"os"
 	"runtime"
 
-	"github.com/go-gl/gl/v4.1-core/gl"
+	"github.com/go-gl/gl/v3.3-core/gl"
 	"github.com/go-gl/glfw/v3.3/glfw"
 )
 
@@ -14,15 +14,14 @@ const (
 	viewportHeight = 500
 	windowTitle    = "Shader"
 
-	// 4.1 is the maximum version supported by macOS.
-	openglMajor = 4
-	openglMinor = 1
+	openglMajor = 3
+	openglMinor = 3
 
 	maxFPS = 60
 )
 
 const vertShader = `
-#version 410
+#version 330
 
 in vec3 vertex;
 
@@ -32,7 +31,7 @@ void main() {
 `
 
 const fragShader = `
-#version 410
+#version 330
 
 uniform vec2 resolution;
 out vec4 fragColor;

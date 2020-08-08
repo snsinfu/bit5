@@ -21,6 +21,8 @@ int main(void)
         return 1;
     }
 
+    glfwMakeContextCurrent(window);
+
     printf("%s\n", glGetString(GL_VERSION));
 
     glfwDestroyWindow(window);

@@ -9,17 +9,57 @@ import (
 	"os"
 	"runtime"
 
-	"github.com/go-gl/gl/v4.3-core/gl"
+	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/glfw/v3.3/glfw"
 )
 
 const (
-	windowTitle    = "Draw to texture"
-	bufferWidth    = 300
-	bufferHeight   = 300
-	viewportWidth  = 600
-	viewportHeight = 600
+	windowTitle  = "Draw to texture"
+	bufferWidth  = 11
+	bufferHeight = 11
+	screenWidth  = 600
+	screenHeight = 600
 )
+
+// Vertex shader that passes coordinates without any transformation.
+const vertShader = `
+#version 410 core
+
+in vec3 vertex;
+
+void main() {
+	gl_Position = vec4(vertex, 1);
+}
+`
+
+// Fragment shader that renders some demo scene.
+const demoShader = `
+#version 410 core
+
+uniform vec2 resolution;
+out vec4 fragColor;
+
+void main() {
+	vec2 st = gl_FragCoord.xy / resolution;
+
+	fragColor.r = 0.5 + 0.5 * st.s;
+	fragColor.g = 1.0 - 0.5 * st.t;
+	fragColor.b = 0.5 + 0.5 * st.t;
+}
+`
+
+// Fragment shader that renders a texture.
+const viewShader = `
+#version 410 core
+
+uniform sampler2D sampler;
+uniform vec2 resolution;
+out vec4 fragColor;
+
+void main() {
+	fragColor = texture(sampler, gl_FragCoord.xy / resolution);
+}
+`
 
 func init() {
 	// OpenGL context requires main thread to be locked.
@@ -34,10 +74,6 @@ func main() {
 }
 
 func run() error {
-	if err := gl.Init(); err != nil {
-		return err
-	}
-
 	// Window.
 
 	if err := glfw.Init(); err != nil {
@@ -48,16 +84,28 @@ func run() error {
 	glfw.WindowHint(glfw.Visible, glfw.False)
 	glfw.WindowHint(glfw.Resizable, glfw.False)
 	glfw.WindowHint(glfw.ContextVersionMajor, 4)
-	glfw.WindowHint(glfw.ContextVersionMinor, 3)
+	glfw.WindowHint(glfw.ContextVersionMinor, 1)
 	glfw.WindowHint(glfw.OpenGLProfile, glfw.OpenGLCoreProfile)
 	glfw.WindowHint(glfw.OpenGLForwardCompatible, glfw.True)
 
-	window, err := glfw.CreateWindow(viewportWidth, viewportHeight, windowTitle, nil, nil)
+	window, err := glfw.CreateWindow(screenWidth, screenHeight, windowTitle, nil, nil)
 	if err != nil {
 		return err
 	}
 
 	window.MakeContextCurrent()
+
+	// OpenGL
+
+	if err := gl.Init(); err != nil {
+		return err
+	}
+
+	// Actual viewport size can be different from window size (retina display).
+	// - https://stackoverflow.com/q/36672935
+	// - https://www.glfw.org/docs/latest/window.html#window_fbsize
+
+	viewportWidth, viewportHeight := window.GetFramebufferSize()
 
 	// Model. A rectangle filling the entire viewport.
 
@@ -80,7 +128,6 @@ func run() error {
 
 	const (
 		attribQuadVertex = 0
-		bindingQuadVertex = 0
 	)
 
 	var quadVAO uint32
@@ -88,11 +135,11 @@ func run() error {
 	defer gl.DeleteVertexArrays(1, &quadVAO)
 
 	gl.BindVertexArray(quadVAO)
-	gl.VertexAttribFormat(attribQuadVertex, 3, gl.FLOAT, false, 0)
-	gl.VertexAttribBinding(attribQuadVertex, bindingQuadVertex)
-	gl.BindVertexBuffer(bindingQuadVertex, quadVBO, 0, 0)
+	gl.BindBuffer(gl.ARRAY_BUFFER, quadVBO)
+	gl.VertexAttribPointer(attribQuadVertex, 3, gl.FLOAT, false, 0, gl.PtrOffset(0));
 	gl.EnableVertexAttribArray(attribQuadVertex)
 	gl.BindVertexArray(0)
+	gl.BindBuffer(gl.ARRAY_BUFFER, 0)
 
 	// Create a texture backed by a framebuffer.
 
@@ -134,23 +181,9 @@ func run() error {
 
 	gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
 
-	// Demo shader. This shader draws some to a texture.
+	// Demo shader. This shader draws something to a texture.
 
-	demoShader := `
-#version 430 core
-
-uniform vec2 resolution;
-out vec4 fragColor;
-
-void main() {
-	vec2 st = gl_FragCoord.xy / resolution;
-
-	fragColor.r = 0.5 + 0.5 * st.s;
-	fragColor.g = 1.0 - 0.5 * st.t;
-	fragColor.b = 0.5 + 0.5 * st.t;
-}
-`
-	demoProgram, err := createFragmentShaderProgram(demoShader)
+	demoProgram, err := createProgram(vertShader, demoShader)
 	if err != nil {
 		return err
 	}
@@ -160,18 +193,7 @@ void main() {
 
 	// Viewport shader. This shader renders the texture to the viewport.
 
-	viewShader := `
-#version 430 core
-
-uniform sampler2D sampler;
-uniform vec2 resolution;
-out vec4 fragColor;
-
-void main() {
-	fragColor = texture(sampler, gl_FragCoord.xy / resolution);
-}
-`
-	viewProgram, err := createFragmentShaderProgram(viewShader)
+	viewProgram, err := createProgram(vertShader, viewShader)
 	if err != nil {
 		return err
 	}
@@ -207,14 +229,19 @@ void main() {
 	window.Show()
 
 	for !window.ShouldClose() {
+		gl.ActiveTexture(gl.TEXTURE0 + texUnit)
+		gl.BindTexture(gl.TEXTURE_2D, framebufferTex)
 
 		gl.UseProgram(demoProgram)
+		gl.Viewport(0, 0, int32(bufferWidth), int32(bufferHeight))
 		gl.BindFramebuffer(gl.FRAMEBUFFER, framebuffer)
 		gl.BindVertexArray(quadVAO)
 		gl.DrawArrays(gl.TRIANGLE_STRIP, 0, 4)
 
-		gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
 		gl.UseProgram(viewProgram)
+		gl.Viewport(0, 0, int32(viewportWidth), int32(viewportHeight))
+		gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
+		gl.BindVertexArray(quadVAO)
 		gl.DrawArrays(gl.TRIANGLE_STRIP, 0, 4)
 
 		window.SwapBuffers()

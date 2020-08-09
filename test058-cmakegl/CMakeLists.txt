@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.10)
 project(test058)
 
+cmake_policy(VERSION 3.11)
+
 find_package(OpenGL REQUIRED)
 find_package(glfw3 REQUIRED)
 

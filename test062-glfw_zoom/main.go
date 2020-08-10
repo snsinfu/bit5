@@ -121,6 +121,8 @@ void main() {
 
 	// Main loop
 	drag := NewDrag()
+	drag.SetXBounds(-viewportWidth/2, viewportWidth/2)
+	drag.SetYBounds(-viewportHeight/2, viewportHeight/2)
 	grabbed := false
 
 	window.SetScrollCallback(func(w *glfw.Window, x, y float64) {

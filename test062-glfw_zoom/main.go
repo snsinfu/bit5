@@ -120,9 +120,8 @@ void main() {
 	)
 
 	// Main loop
+	drag := NewDrag()
 	grabbed := false
-	startX := 0.0
-	startY := 0.0
 
 	window.SetScrollCallback(func(w *glfw.Window, x, y float64) {
 		fmt.Printf("SCROLL (%g, %g)\n", x, y)
@@ -130,7 +129,7 @@ void main() {
 
 	window.SetCursorPosCallback(func(w *glfw.Window, x, y float64) {
 		if grabbed {
-			fmt.Printf("DRAG (%g, %g)\n", x - startX, y - startY)
+			drag.Drag(int(x), viewportHeight-int(y))
 		}
 	})
 
@@ -139,7 +138,8 @@ void main() {
 			switch action {
 			case glfw.Press:
 				grabbed = true
-				startX, startY = window.GetCursorPos()
+				x, y := window.GetCursorPos()
+				drag.Start(int(x), viewportHeight-int(y))
 
 			case glfw.Release:
 				grabbed = false
@@ -152,7 +152,10 @@ void main() {
 	for !window.ShouldClose() {
 		gl.Clear(gl.COLOR_BUFFER_BIT)
 
-		gl.Viewport(0, 0, int32(viewportWidth), int32(viewportHeight))
+		x, y := drag.GetPos()
+		gl.Viewport(
+			int32(x), int32(y), int32(viewportWidth), int32(viewportHeight),
+		)
 		gl.UseProgram(program)
 		gl.BindVertexArray(vao)
 		gl.DrawArrays(gl.TRIANGLE_STRIP, 0, 4)

@@ -1,0 +1,16 @@
+{
+    "all": {
+        "children": {
+            "app": ["app1", "app2"]
+        },
+
+        "hosts": {
+            "app1": {
+                "ansible_host": "12.34.567.8"
+            },
+            "app2": {
+                "ansible_host": "90.123.45.678"
+            }
+        }
+    }
+}

@@ -1,0 +1,27 @@
+{
+    "all": {
+        "children": {
+            "data": {
+                "hosts": {
+                    "foo": {}
+                }
+            },
+            "app": {
+                "hosts": {
+                    "bar": {},
+                    "baz": {}
+                }
+            },
+            "targets": {
+                "hosts": {
+                    "foo": {},
+                    "bar": {},
+                    "baz": {}
+                },
+                "vars": {
+                    "ansible_host": "{{ public_address }}"
+                }
+            }
+        }
+    }
+}

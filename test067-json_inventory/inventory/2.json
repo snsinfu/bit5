@@ -1,0 +1,15 @@
+{
+    "all": {
+        "hosts": {
+            "foo": {
+                "public_address": "10.50.0.1"
+            },
+            "bar": {
+                "public_address": "10.50.0.2"
+            },
+            "baz": {
+                "public_address": "10.50.0.3"
+            }
+        }
+    }
+}

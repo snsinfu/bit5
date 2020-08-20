@@ -1,0 +1,12 @@
+digraph {
+    0 [label="foo"];
+    1 [label="bar"];
+    0.1 [label="", width=0, height=0, shape=point];
+
+    0 -> 0.1 [arrowhead=none];
+    0.1 -> 1;
+    0.1 -> 1 [dir=back, arrowtail=tee];
+
+    // Here I use 0.1 -> 1 instead of 1 -> 0.1 because the latter produces a
+    // kinked edge. Idea from: https://stackoverflow.com/a/38413403
+}

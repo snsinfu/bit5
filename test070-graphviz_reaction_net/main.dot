@@ -1,0 +1,27 @@
+//
+// x0 -----> x1 ----->> m ----->> p --+
+//  ^        |          |         |   |
+//  +--------+          V         V   |
+//      ^                             |
+//      +-----------------------------+
+//
+
+digraph {
+    x1_x0 [label="", width=0, shape=point];
+    vm [label="", width=0, shape=point];
+    vp [label="", width=0, shape=point];
+
+    x0 -> x1 [minlen=2];
+    x1 -> x1_x0 [arrowhead=none];
+    x1_x0 -> x0;
+
+    x1 -> m [arrowtail=odot, arrowhead=normal, dir=both, minlen=2];
+    m -> p [arrowtail=odot, arrowhead=normal, dir=both, minlen=2];
+    m -> vm [arrowhead=onormal];
+    p -> vp [arrowhead=onormal];
+
+    // This produces kinked edge...
+    p -> x1_x0;
+
+    { rank=same; x0; x1; m; p }
+}

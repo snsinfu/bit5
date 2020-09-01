@@ -1,0 +1,2 @@
+plugin: s3
+key: hostvars.json

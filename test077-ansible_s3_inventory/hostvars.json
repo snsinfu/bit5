@@ -1,0 +1,9 @@
+{
+    "all": {
+        "hosts": {
+            "localhost": {
+                "some_token": "4BqmFXjIzknsSpNuG8G1ZCIC"
+            }
+        }
+    }
+}

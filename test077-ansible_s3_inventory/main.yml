@@ -1,0 +1,9 @@
+- hosts: localhost
+  become: no
+  connection: local
+
+  tasks:
+
+    - name: Show hostvar read from S3 inventory
+      debug:
+        msg: "{{ some_token }}"

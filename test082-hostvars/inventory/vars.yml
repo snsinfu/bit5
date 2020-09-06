@@ -1,0 +1,11 @@
+all:
+  hosts:
+    argon:
+      some_token: A-52252c10af7669a48c50e2b2390250c7
+    boron:
+      some_token: B-be666b9e94d0b99759e67cb6d1a3ae4b
+    carbon:
+      some_token: C-f9b5e04bc7b5210bde0643591e2480e5
+
+  vars:
+    common_token: 810bdab158df6fcb9bfe1ad3611225e3

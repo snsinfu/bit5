@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en_US">
+  <head>
+    <meta charset="utf-8">
+    <title>Mino</title>
+
+    <script>
+      "use strict";
+
+      class Matrix {
+        constructor(w, h, data) {
+          this.width = w;
+          this.height = h;
+          this.data = new Int32Array(w * h);
+
+          if (data) {
+            for (let i = 0; i < w * h; i++) {
+              this.data[i] = data[i];
+            }
+          }
+        }
+
+        set(x, y, value) {
+          this.data[this.locate(x, y)] = value;
+        }
+
+        get(x, y) {
+          return this.data[this.locate(x, y)];
+        }
+
+        locate(x, y) {
+          return x + y * this.width;
+        }
+      }
+
+      const containerMargin = 3;
+      const blockMargin = 3;
+      const blockSize = 15;
+      const canvasWidth = 230;
+      const canvasHeight = 300;
+      const width = 8;
+      const height = 16;
+      const renderFPS = 30;
+      const mechanicsFPS = 1;
+
+      const tetriminos = [
+        {
+          states: [
+            new Matrix(3, 2, [1, 1, 0, 0, 1, 1]),
+            new Matrix(2, 3, [0, 1, 1, 1, 1, 0])
+          ]
+        },
+        {
+          states: [
+            new Matrix(2, 2, [1, 1, 1, 1])
+          ]
+        },
+        {
+          states: [
+            new Matrix(3, 2, [0, 1, 0, 1, 1, 1]),
+            new Matrix(2, 3, [1, 0, 1, 1, 1, 0]),
+            new Matrix(3, 2, [1, 1, 1, 0, 1, 0]),
+            new Matrix(2, 3, [0, 1, 1, 1, 0, 1])
+          ]
+        },
+        {
+          states: [
+            new Matrix(1, 4, [1, 1, 1, 1]),
+            new Matrix(4, 1, [1, 1, 1, 1])
+          ]
+        }
+      ];
+      let currMino;
+      let nextMino = tetriminos[0];
+      let minoState;
+      let minoX;
+      let minoY;
+
+      let container = new Matrix(width, height);
+      let prevRenderTick = performance.now();
+      let prevMechanicsTick = performance.now();
+      let canvas;
+
+      window.addEventListener("load", (event) => {
+        init();
+        window.addEventListener("keydown", onKeyDown)
+        window.requestAnimationFrame(onFrame);
+      });
+
+      function init() {
+        canvas = document.getElementById("canvas");
+        canvas.width = canvasWidth;
+        canvas.height = canvasHeight;
+      }
+
+      function onKeyDown(event) {
+        switch (event.keyCode) {
+          case 32: // Space
+            juggleMino();
+            break;
+
+          case 37: // Left
+            moveMino(-1, 0);
+            break;
+
+          case 38: // Up
+            moveMino(0, 1);
+            break;
+
+          case 39: // Right
+            moveMino(1, 0);
+            break;
+
+          case 40: // Down
+            moveMino(0, -1);
+            break;
+
+          default:
+            break;
+        }
+      }
+
+      function onFrame() {
+        window.requestAnimationFrame(onFrame);
+
+        const tick = performance.now();
+
+        if ((tick - prevRenderTick) * renderFPS >= 1000) {
+          render();
+          prevRenderTick = tick;
+        }
+
+        if ((tick - prevMechanicsTick) * mechanicsFPS >= 1000) {
+          update();
+          prevMechanicsTick = tick;
+        }
+      }
+
+      function render() {
+        const ctx = canvas.getContext("2d");
+
+        ctx.fillStyle = "#fff";
+        ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+
+        ctx.strokeStyle = "#000";
+        ctx.strokeWidth = 1;
+        ctx.strokeRect(0, 0, canvasWidth, canvasHeight);
+
+        // Container
+        for (let x = 0; x < width; x++) {
+          for (let y = 0; y < height; y++) {
+            if (container.get(x, y) === 0) {
+              ctx.fillStyle = "#eee";
+            } else {
+              ctx.fillStyle = "#000";
+            }
+            const posX = x * (blockSize + blockMargin) + containerMargin;
+            const posY = -(1 + y) * (blockSize + blockMargin) + canvasHeight - containerMargin;
+            ctx.fillRect(posX, posY, blockSize, blockSize);
+          }
+        }
+
+        // Current mino
+        if (currMino) {
+          const mino = currMino.states[minoState];
+
+          for (let x = 0; x < mino.width; x++) {
+            for (let y = 0; y < mino.height; y++) {
+              if (mino.get(x, y) === 0) {
+                ctx.fillStyle = "#eee";
+              } else {
+                ctx.fillStyle = "#f77";
+              }
+              const posX = (x + minoX) * (blockSize + blockMargin) + containerMargin;
+              const posY = -(1 + y + minoY) * (blockSize + blockMargin) + canvasHeight - containerMargin;
+
+              ctx.fillRect(posX, posY, blockSize, blockSize);
+            }
+          }
+        }
+
+        // Next mino
+        {
+          const left = (blockSize + blockMargin) * width + 2 * containerMargin;
+          const top = -(blockSize + blockMargin) * height - containerMargin + canvasHeight;
+
+          const mino = nextMino.states[0]
+          for (let x = 0; x < mino.width; x++) {
+            for (let y = 0; y < mino.height; y++) {
+              if (mino.get(x, y) === 0) {
+                ctx.fillStyle = "#eee";
+              } else {
+                ctx.fillStyle = "#9af";
+              }
+              const posX = left + (blockSize + blockMargin) * x;
+              const posY = top + (blockSize + blockMargin) * y;
+              ctx.fillRect(posX, posY, blockSize, blockSize);
+            }
+          }
+        }
+      }
+
+      function update() {
+        if (!currMino) {
+          currMino = nextMino;
+          minoState = 0;
+          minoX = (width / 2) >> 0;
+          minoY = 0;
+
+          let i = (tetriminos.length * Math.random()) >> 0;
+          if (i >= tetriminos.length) {
+            i = tetriminos.length - 1;
+          }
+          nextMino = tetriminos[i];
+        }
+      }
+
+      function juggleMino() {
+        if (!currMino) {
+          return;
+        }
+
+        minoState++;
+        minoState %= currMino.states.length;
+
+        render();
+      }
+
+      function moveMino(dx, dy) {
+        minoX += dx;
+        minoY += dy;
+
+        render();
+      }
+    </script>
+  </head>
+  <body>
+    <canvas id="canvas" width="400" height="400"></canvas>
+  </body>
+</html>

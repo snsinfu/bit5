@@ -1,0 +1,16 @@
+{
+  "host_vars": {
+    "carbon": {
+      "api_token": "C-136e143ccabaa097a10e806b1d9476ab"
+    },
+    "xenon": {
+      "api_token": "X-66326cd94ff95985bea647ba6a57c83f"
+    }
+  },
+
+  "group_vars": {
+    "solid": {
+      "endpoint": "https://example.com/v2"
+    }
+  }
+}

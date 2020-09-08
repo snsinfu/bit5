@@ -1,0 +1,4 @@
+objects:
+  - key: dev/base.yml
+  - key: dev/update.json
+    optional: yes

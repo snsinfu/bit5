@@ -1,0 +1,21 @@
+{
+  host_vars: {
+    argon: {
+      public_address: "10.20.30.40",
+    },
+    boron: {
+      public_address: "10.20.30.41",
+    },
+    carbon: {
+      public_address: "10.20.30.42",
+    },
+  },
+
+  group_vars: {
+    // We may directly connect to hosts in the `noble` group. For other hosts
+    // we use VPNs.
+    noble: {
+      ansible_host: "{{ public_address }}",
+    },
+  },
+}

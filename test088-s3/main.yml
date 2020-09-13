@@ -1,0 +1,17 @@
+- hosts: localhost
+  become: no
+  connection: local
+  gather_facts: no
+
+  tasks:
+    - name: Update the content of S3 object
+      s3put:
+        region: "{{ lookup('env', 'S3_REGION') }}"
+        bucket: "{{ lookup('env', 'S3_BUCKET') }}"
+        key: test.json
+        content: |
+          {
+            "id": "6894076109e7a0b059ff19a472b501ac",
+            "date": "Sun Sep 13 23:21:46 JST 2020"
+          }
+        content_type: application/json

@@ -1,0 +1,6 @@
+{
+    "gates": [
+        {"type": "sigmoid", "threshold": 0.5},
+        {"type": "hill", "threshold": 0.5, "exponent": 4}
+    ]
+}

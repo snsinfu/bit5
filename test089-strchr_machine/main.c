@@ -7,7 +7,7 @@ int main(void) {
     const char program[] =
         "ypnyismmpvqqurskjsumgkxnbljpvyvdcjnpusxltrbznastfbzkcspxbjxbrwmt";
 
-    for (size_t i = 0; i < strlen(source); i++) {
+    for (size_t i = 0; i < strlen(program); i++) {
         printf("%zu\t", i);
 
         // Generate a strchr sequence starting from the i-th char.

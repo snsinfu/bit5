@@ -1,0 +1,11 @@
+- hosts: localhost
+  become: no
+  connection: local
+  gather_facts: no
+
+  tasks:
+    - debug:
+        msg: "{{ data_object_uri }}"
+
+    - debug:
+        msg: "{{ host_token }}"

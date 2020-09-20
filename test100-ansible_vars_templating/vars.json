@@ -1,0 +1,4 @@
+{
+    "data_object_uri": "s3://{{ lookup('env', 'S3_BUCKET') }}/data",
+    "common_host_token": "3966c172b182833d0104356a74d9a752"
+}

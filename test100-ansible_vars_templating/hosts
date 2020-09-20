@@ -1,0 +1,5 @@
+[all]
+localhost
+
+[all:vars]
+host_token={{ common_host_token }}

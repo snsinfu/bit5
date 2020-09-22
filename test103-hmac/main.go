@@ -33,7 +33,6 @@ func run() error {
 	mac := hmacSHA1(msg, key)
 	fmt.Printf("% 02x\n", mac[:])
 
-	// FIXME!
 	if !reflect.DeepEqual(mac[:], expect) {
 		panic("Incorrect HMAC!")
 	}
@@ -42,20 +41,20 @@ func run() error {
 }
 
 func hmacSHA1(msg, key []byte) [20]byte {
-	const keySize = 20
+	const padSize = 64
 
-	if len(key) > keySize {
+	if len(key) > padSize {
 		hashKey := sha1.Sum(key)
 		key = hashKey[:]
 	}
 
-	ipad := make([]byte, keySize)
-	opad := make([]byte, keySize)
+	ipad := make([]byte, padSize)
+	opad := make([]byte, padSize)
 
 	copy(ipad, key)
 	copy(opad, key)
 
-	for i := 0; i < keySize; i++ {
+	for i := 0; i < padSize; i++ {
 		ipad[i] ^= 0x36
 		opad[i] ^= 0x5c
 	}

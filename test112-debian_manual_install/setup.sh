@@ -34,9 +34,11 @@ mount -t proc  none ${ROOT}/proc
 mount -t sysfs none ${ROOT}/sys
 mount --bind   /dev ${ROOT}/dev
 
-chroot ${ROOT} apt-get install -y --no-install-recommends grub-pc linux-image-amd64
+chroot ${ROOT} apt-get install -y --no-install-recommends grub-pc linux-image-amd64 locales
 chroot ${ROOT} grub-install ${DISK}
 chroot ${ROOT} update-grub
+
+sed -i '/en_US\.UTF-8/ s/^# *//' ${ROOT}/etc/locale.gen
 
 cat > ${ROOT}/etc/fstab << END
 ${DISK}2 /boot ext4  defaults 0 2
@@ -62,3 +64,8 @@ ChallengeResponseAuthentication no
 UsePAM yes
 Subsystem sftp /usr/lib/openssh/sftp-server
 END
+
+chroot ${ROOT} systemctl enable cloud-init-local
+chroot ${ROOT} systemctl enable cloud-init
+chroot ${ROOT} systemctl enable cloud-config
+chroot ${ROOT} systemctl enable cloud-final

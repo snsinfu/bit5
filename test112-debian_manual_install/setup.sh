@@ -5,6 +5,7 @@ if [ $(id -u) != 0 ]; then
 fi
 
 DISK=/dev/sda
+ROOT=/mnt
 CODENAME=buster
 
 export DEBIAN_FRONTEND=noninteractive
@@ -21,54 +22,43 @@ sgdisk     -n3:0:0        -t3:8304 ${DISK}  # Root
 mkfs.ext4 ${DISK}2
 mkfs.ext4 ${DISK}3
 
-mount ${DISK}3 /mnt
-mkdir /mnt/boot
-mount ${DISK}2 /mnt/boot
+mount ${DISK}3 ${ROOT}
+mkdir ${ROOT}/boot
+mount ${DISK}2 ${ROOT}/boot
 
-# System ---------------------------------------------------------------------
+# DEBIAN SETUP ---------------------------------------------------------------
 
-debootstrap ${CODENAME} /mnt
+debootstrap ${CODENAME} ${ROOT}
 
-mount -t proc  none /mnt/proc
-mount -t sysfs none /mnt/sys
-mount --bind   /dev /mnt/dev
+mount -t proc  none ${ROOT}/proc
+mount -t sysfs none ${ROOT}/sys
+mount --bind   /dev ${ROOT}/dev
 
-chroot /mnt
+chroot ${ROOT} apt-get install -y --no-install-recommends grub-pc linux-image-amd64
+chroot ${ROOT} grub-install ${DISK}
+chroot ${ROOT} update-grub
 
-apt-get install -y --no-install-recommends \
-    cloud-init \
-    grub-pc \
-    linux-image-amd64 \
-    openssh-server
-
-cat > /etc/fstab << END
+cat > ${ROOT}/etc/fstab << END
 ${DISK}2 /boot ext4  defaults 0 2
 ${DISK}3 /     ext4  defaults 0 1
 proc     /proc proc  defaults 0 0
 sysfs    /sys  sysfs defaults 0 0
 END
 
-cat > /etc/ssh/sshd_config << END
+cat > ${ROOT}/etc/network/interfaces.d/loopback << END
+auto lo
+iface lo inet loopback
+END
+
+# MINIMAL SYSTEM FOR CLOUDINIT -----------------------------------------------
+
+chroot ${ROOT} apt-get install -y --no-install-recommends cloud-init openssh-server
+chroot ${ROOT} passwd -d root
+
+cat > ${ROOT}/etc/ssh/sshd_config << END
 PermitRootLogin no
 PasswordAuthentication no
 ChallengeResponseAuthentication no
 UsePAM yes
 Subsystem sftp /usr/lib/openssh/sftp-server
 END
-
-cat > /etc/network/interfaces.d/setup << END
-auto lo
-iface lo inet loopback
-
-auto enp0s3
-allow-hotplug enp0s3
-iface enp0s3 inet dhcp
-END
-
-# This fails. "grub-install: error: failed to get canonical path of `overlay'."
-grub-install ${DISK}
-update-grub
-
-passwd -d root
-
-sleep 3600

@@ -1,0 +1,13 @@
+[Unit]
+Description=SeaweedFS distributed file system server
+Wants=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/sbin/weed server -filer -dir /var/lib/seaweed
+User=seaweed
+Group=seaweed
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

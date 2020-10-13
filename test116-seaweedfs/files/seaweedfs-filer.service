@@ -1,0 +1,14 @@
+[Unit]
+Description=SeaweedFS filer server
+Wants=network.target
+After=seaweedfs-master.service
+
+[Service]
+Type=simple
+ExecStart=/usr/sbin/weed filer -port 8888 -master localhost:9333
+User=seaweed
+Group=seaweed
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

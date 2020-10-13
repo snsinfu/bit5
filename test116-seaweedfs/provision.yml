@@ -1,0 +1,93 @@
+- hosts: all
+  become: true
+
+  vars:
+    seaweed_version: "2.04"
+
+  tasks:
+    - name: seaweed group is present
+      group:
+        gid: 4000
+        name: seaweed
+        state: present
+
+    - name: seaweed user is present
+      user:
+        uid: 4000
+        name: seaweed
+        group: seaweed
+        system: true
+        create_home: false
+        password: '*'
+        state: present
+
+    - name: seaweed root directory is present
+      file:
+        path: /var/lib/seaweedfs
+        owner: seaweed
+        group: seaweed
+        mode: 0700
+        state: directory
+
+    - name: seaweed config directory is present
+      file:
+        path: /etc/seaweedfs
+        owner: seaweed
+        group: seaweed
+        mode: 0700
+        state: directory
+
+    - name: seaweed sub directories are present
+      file:
+        path: "/var/lib/seaweedfs/{{ item }}"
+        owner: seaweed
+        group: seaweed
+        mode: 0700
+        state: directory
+      with_items:
+        - master
+        - volume
+        - filer
+
+    - name: seaweed executable is present
+      unarchive:
+        remote_src: true
+        src: "https://github.com/chrislusf/seaweedfs/releases/download/{{ seaweed_version }}/linux_amd64.tar.gz"
+        dest: /usr/sbin
+        creates: /usr/sbin/weed
+
+    - name: seaweed service units are present
+      copy:
+        src: "{{ item }}"
+        dest: /etc/systemd/system
+      with_items:
+        - seaweedfs-master.service
+        - seaweedfs-volume.service
+        - seaweedfs-filer.service
+
+    - name: seaweed filer config is up
+      copy:
+        src: filer.toml
+        dest: /etc/seaweedfs
+        owner: seaweed
+        group: seaweed
+        mode: 0640
+
+    - name: seaweed services are activated
+      systemd:
+        service: "{{ item }}"
+        enabled: true
+        state: started
+      with_items:
+        - seaweedfs-master
+        - seaweedfs-volume
+        - seaweedfs-filer
+
+    - name: example data file is up
+      copy:
+        content: |
+          Hello, world!
+        dest: hello.txt
+
+    - name: example data is uploaded
+      command: /usr/sbin/weed filer.copy hello.txt http://localhost:8888/public/

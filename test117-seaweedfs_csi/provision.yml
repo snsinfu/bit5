@@ -121,7 +121,7 @@
       replace:
         path: /root/seaweedfs-csi.yaml
         regexp: "192.168.2.7:8888"
-        replace: "localhost:8888"
+        replace: "10.0.2.15:8888"
 
     - name: seaweed CSI is deployed
       command: kubectl apply -f /root/seaweedfs-csi.yaml

@@ -1,0 +1,137 @@
+- hosts: all
+  become: true
+
+  vars:
+    k3s_version: "v1.19.2+k3s1"
+    k3s_address: "localhost"
+    seaweed_version: "2.04"
+
+  tasks:
+
+    # K3S --------------------------------------------------------------------
+
+    - name: curl is installed
+      apt:
+        name: curl
+        state: present
+
+    - name: k3s is installed
+      shell: curl -fsSL https://get.k3s.io | sh -
+      args:
+        creates: /usr/local/bin/k3s
+        warn: false
+      environment:
+        INSTALL_K3S_VERSION: "{{ k3s_version }}"
+        INSTALL_K3S_EXEC: "server --tls-san {{ k3s_address }} --no-deploy traefik"
+
+    - name: k3s is activated
+      service:
+        name: k3s
+        state: started
+        enabled: true
+
+    # SEAWEEDFS --------------------------------------------------------------
+
+    - name: seaweed group is present
+      group:
+        gid: 4000
+        name: seaweed
+        state: present
+
+    - name: seaweed user is present
+      user:
+        uid: 4000
+        name: seaweed
+        group: seaweed
+        system: true
+        create_home: false
+        password: '*'
+        state: present
+
+    - name: seaweed root directory is present
+      file:
+        path: /var/lib/seaweedfs
+        owner: seaweed
+        group: seaweed
+        mode: 0700
+        state: directory
+
+    - name: seaweed config directory is present
+      file:
+        path: /etc/seaweedfs
+        owner: seaweed
+        group: seaweed
+        mode: 0700
+        state: directory
+
+    - name: seaweed sub directories are present
+      file:
+        path: "/var/lib/seaweedfs/{{ item }}"
+        owner: seaweed
+        group: seaweed
+        mode: 0700
+        state: directory
+      with_items:
+        - master
+        - volume
+        - filer
+
+    - name: seaweed executable is present
+      unarchive:
+        remote_src: true
+        src: "https://github.com/chrislusf/seaweedfs/releases/download/{{ seaweed_version }}/linux_amd64.tar.gz"
+        dest: /usr/sbin
+        creates: /usr/sbin/weed
+
+    - name: seaweed service units are present
+      copy:
+        src: "{{ item }}"
+        dest: /etc/systemd/system
+      with_items:
+        - seaweedfs-master.service
+        - seaweedfs-volume.service
+        - seaweedfs-filer.service
+
+    - name: seaweed filer config is up
+      copy:
+        src: filer.toml
+        dest: /etc/seaweedfs
+        owner: seaweed
+        group: seaweed
+        mode: 0640
+
+    - name: seaweed services are activated
+      service:
+        name: "{{ item }}"
+        state: started
+        enabled: true
+      with_items:
+        - seaweedfs-master
+        - seaweedfs-volume
+        - seaweedfs-filer
+
+    # CSI --------------------------------------------------------------------
+
+    - name: seaweed CSI manifest is downloaded
+      get_url:
+        url: https://github.com/seaweedfs/seaweedfs-csi-driver/raw/master/deploy/kubernetes/seaweedfs-csi.yaml
+        dest: /root/seaweedfs-csi.yaml
+
+    - name: seaweed CSI manifest is adjusted for this system
+      replace:
+        path: /root/seaweedfs-csi.yaml
+        regexp: "192.168.2.7:8888"
+        replace: "10.0.2.15:8888"
+
+    - name: seaweed CSI is deployed
+      command: kubectl apply -f /root/seaweedfs-csi.yaml
+
+    # TEST -------------------------------------------------------------------
+
+    - name: test manifest is up
+      copy:
+        src: test.yaml
+        dest: .
+
+    - name: test manifest is deployed
+      command: kubectl apply -f test.yaml

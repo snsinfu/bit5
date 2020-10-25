@@ -1,0 +1,13 @@
+[Unit]
+Description=SeaweedFS master server
+Wants=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/sbin/weed master -port 9333 -mdir /var/lib/seaweedfs/master
+User=seaweed
+Group=seaweed
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

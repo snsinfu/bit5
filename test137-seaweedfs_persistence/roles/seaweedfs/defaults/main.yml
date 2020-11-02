@@ -1,0 +1,4 @@
+seaweedfs_version:
+seaweedfs_master_port: 9333
+seaweedfs_filer_port: 8888
+seaweedfs_volume_port: 8080

@@ -1,0 +1,31 @@
+- hosts: all
+  become: true
+
+  vars:
+    k3s_version: "v1.19.3+k3s2"
+    k3s_address: "localhost"
+    seaweedfs_version: "2.08"
+
+  tasks:
+
+    - import_role:
+        name: k3s
+
+    - import_role:
+        name: seaweedfs
+
+    # CSI --------------------------------------------------------------------
+
+    - name: seaweed CSI manifest is downloaded
+      get_url:
+        url: https://github.com/seaweedfs/seaweedfs-csi-driver/raw/master/deploy/kubernetes/seaweedfs-csi.yaml
+        dest: /root/seaweedfs-csi.yaml
+
+    - name: seaweed CSI manifest is adjusted for this system
+      replace:
+        path: /root/seaweedfs-csi.yaml
+        regexp: "192.168.2.7:8888"
+        replace: "10.0.2.15:8888"
+
+    - name: seaweed CSI is deployed
+      command: kubectl apply -f /root/seaweedfs-csi.yaml

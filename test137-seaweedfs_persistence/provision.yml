@@ -25,7 +25,17 @@
       replace:
         path: /root/seaweedfs-csi.yaml
         regexp: "192.168.2.7:8888"
-        replace: "10.0.2.15:8888"
+        replace: "10.0.2.15:{{ seaweedfs_filer_port }}"
 
     - name: seaweed CSI is deployed
       command: kubectl apply -f /root/seaweedfs-csi.yaml
+
+    # TEST -------------------------------------------------------------------
+
+    - name: test mainfests are up
+      copy:
+        src: "{{ item }}"
+        dest: .
+      with_items:
+        - volume.yaml
+        - app.yaml

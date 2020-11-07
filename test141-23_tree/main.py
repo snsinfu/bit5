@@ -5,10 +5,16 @@
 # https://cathyatseneca.gitbooks.io/data-structures-and-algorithms/content/2-3_trees/
 # https://www.geeksforgeeks.org/2-3-trees-search-and-insert/
 # https://www.slideshare.net/sandpoonia/23-tree
+#
+# Wikipedia's scarse, not-looking-cool description actually helped. I first
+# tried to be elegant with recursion and failed hard. Then, I followed the
+# elaborate, "uncool" enumeration of cases in the Wikipedia article, and my
+# implementation immediately got to work.
 
 
 def main():
     root = Node(50)
+
     root = insert(root, 30)
     root = insert(root, 10)
     root = insert(root, 70)

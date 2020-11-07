@@ -29,6 +29,9 @@ def main():
 
 
 def walk(root, indent=0):
+    """
+    Print tree structure.
+    """
     print("  " * indent + str(root.values))
     for child in root.children:
         walk(child, indent + 1)
@@ -58,14 +61,12 @@ def do_insert(node, value):
     lower, median, upper = node.values
     parent = node.parent
 
-    lower_sibling = Node(lower, parent)
-    upper_sibling = Node(upper, parent)
+    lower_sibling = Node(lower)
+    upper_sibling = Node(upper)
 
     if parent is None:
         parent = Node(median)
-        parent.children = [lower_sibling, upper_sibling]
-        lower_sibling.parent = parent
-        upper_sibling.parent = parent
+        bind_children(parent, [lower_sibling, upper_sibling])
         return parent
 
     if len(parent.children) == 2:
@@ -79,11 +80,11 @@ def do_insert(node, value):
         if a is node:
             assert median <= v
             parent.values = [median, v]
-            parent.children = [lower_sibling, upper_sibling, b]
+            bind_children(parent, [lower_sibling, upper_sibling, b])
         else:
             assert v <= median
             parent.values = [v, median]
-            parent.children = [a, lower_sibling, upper_sibling]
+            bind_children(parent, [a, lower_sibling, upper_sibling])
     else:
         # Fix:
         #                                   |
@@ -97,42 +98,36 @@ def do_insert(node, value):
         a, b, c = parent.children
         if a is node:
             assert median <= u <= v
-            proxy_1 = Node(median, parent)
-            proxy_2 = Node(v, parent)
+            proxy_1 = Node(median)
+            proxy_2 = Node(v)
             parent.values = [u]
-            parent.children = [proxy_1, proxy_2]
-            proxy_1.children = [lower_sibling, upper_sibling]
-            proxy_2.children = [b, c]
-            lower_sibling.parent = proxy_1
-            upper_sibling.parent = proxy_1
-            b.parent = proxy_2
-            c.parent = proxy_2
+            bind_children(parent, [proxy_1, proxy_2])
+            bind_children(proxy_1, [lower_sibling, upper_sibling])
+            bind_children(proxy_2, [b, c])
         elif b is node:
             assert u <= median <= v
-            proxy_1 = Node(u, parent)
-            proxy_2 = Node(v, parent)
+            proxy_1 = Node(u)
+            proxy_2 = Node(v)
             parent.values = [median]
-            parent.children = [proxy_1, proxy_2]
-            proxy_1.children = [a, lower_sibling]
-            proxy_2.children = [upper_sibling, c]
-            a.parent = proxy_1
-            lower_sibling.parent = proxy_1
-            upper_sibling.parent = proxy_2
-            c.parent = proxy_2
+            bind_children(parent, [proxy_1, proxy_2])
+            bind_children(proxy_1, [a, lower_sibling])
+            bind_children(proxy_2, [upper_sibling, c])
         else:
             assert u <= v <= median
-            proxy_1 = Node(u, parent)
-            proxy_2 = Node(median, parent)
+            proxy_1 = Node(u)
+            proxy_2 = Node(median)
             parent.values = [v]
-            parent.children = [proxy_1, proxy_2]
-            proxy_1.children = [a, b]
-            proxy_2.children = [lower_sibling, upper_sibling]
-            a.parent = proxy_1
-            b.parent = proxy_1
-            lower_sibling.parent = proxy_2
-            upper_sibling.parent = proxy_2
+            bind_children(parent, [proxy_1, proxy_2])
+            bind_children(proxy_1, [a, b])
+            bind_children(proxy_2, [lower_sibling, upper_sibling])
 
     return parent
+
+
+def bind_children(parent, children):
+    parent.children = children
+    for child in children:
+        child.parent = parent
 
 
 def find_leaf(node, value):
@@ -161,8 +156,8 @@ def find_leaf(node, value):
 
 
 class Node:
-    def __init__(self, value, parent=None):
-        self.parent = parent
+    def __init__(self, value):
+        self.parent = None
         self.children = []
         self.values = [value]
 

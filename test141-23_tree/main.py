@@ -13,7 +13,9 @@ def main():
     root = insert(root, 10)
     root = insert(root, 70)
     root = insert(root, 60)
-    # root = insert(root, 40)  # FIXME!
+    root = insert(root, 40)
+    root = insert(root, 80)
+    #root = insert(root, 90) # FIXME
 
     walk(root)
 
@@ -24,98 +26,71 @@ def walk(root, indent=0):
         walk(child, indent + 1)
 
 
-def insert(node, value):
+def insert(root, value):
     """
-    Insert `value` to the 2-3 tree whose root is `node`. Returns the root node
-    of the 2-3 tree after insertion.
+    Insert value to a 2-3 tree. Returns the root node of the 2-3 tree after
+    insertion, which can potentially be re-created.
     """
-    if len(node.values) == 1:
-        return insert_1(node, value)
-
-    if len(node.values) == 2:
-        return insert_2(node, value)
-
-    assert False
-
-
-def insert_1(node, value):
-    threshold, = node.values
-
-    if node.children:
-        left, right = node.children
-        if value < threshold:
-            if left:
-                insert(left, value)
-            else:
-                node.children[0] = Node(value, node)
-        else:
-            if right:
-                insert(right, value)
-            else:
-                node.children[1] = Node(value, node)
-        return node
-
-    node.values.append(value)
-    node.values.sort()
+    node = do_insert(find_leaf(root, value), value)
+    while node.parent:
+        node = node.parent
     return node
 
 
-def insert_2(node, value):
-    lower, upper = node.values
-
-    if node.children:
-        left, middle, right = node.children
-        if value < lower:
-            if left:
-                insert(left, value)
-            else:
-                node.children[0] = Node(value, node)
-        elif value < upper:
-            if middle:
-                insert(middle, value)
-            else:
-                node.children[1] = Node(value, node)
-        else:
-            if right:
-                insert(right, value)
-            else:
-                node.children[2] = Node(value, node)
-        return node
-
+def do_insert(node, value):
     node.values.append(value)
     node.values.sort()
+
+    if len(node.values) == 2:
+        return node
+
     lower, median, upper = node.values
+
+    sibling = Node(lower, node.parent)
+    node.values = [upper]
 
     if node.parent is None:
         parent = Node(median)
-        attach_child(parent, Node(lower))
-        attach_child(parent, Node(upper))
+        parent.children = [sibling, node]
+        sibling.parent = parent
+        node.parent = parent
         return parent
 
-    parent = node.parent
-    detach_child(parent, node)
-    parent = insert(parent, median)
-    attach_child(parent, Node(lower))
-    attach_child(parent, Node(upper))
-    return parent
+    if len(node.parent.children) == 1:
+        node.parent.children = [sibling, node]
+    else:
+        a, b = node.parent.children
+        if a is node:
+            node.parent.children = [sibling, node, b]
+        else:
+            node.parent.children = [a, sibling, node]
+
+    return do_insert(node.parent, median)
 
 
-def attach_child(node, child):
-    node.children.append(child)
-    child.parent = node
+def find_leaf(node, value):
+    if not node.children:
+        return node
 
+    if len(node.children) == 2:
+        left, right = node.children
+        threshold, = node.values
+        if value < threshold:
+            child = left
+        else:
+            child = right
 
-def detach_child(node, child):
-    # This breaks everything! I need to rethink how to properly promote median,
-    # detach a node and split it into new nodes.
+    if len(node.children) == 3:
+        left, middle, right = node.children
+        lower, upper = node.values
+        if value < lower:
+            child = left
+        elif value < upper:
+            child = middle
+        else:
+            child = right
 
-    for i, ch in enumerate(node.children):
-        if ch is child:
-            node.children[i] = None
-            child.parent = None
-            return
-
-    assert False
+    return find_leaf(child, value)
 
 
 class Node:

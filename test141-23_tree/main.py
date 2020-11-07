@@ -71,92 +71,68 @@ def do_insert(node, value):
     if len(parent.children) == 2:
         # OK:
         #   p           p
-        #  [k]        [k,m]
+        #  [v]        [v,m]
         #  / \   =>   / | \
-        # *   n      *  s  n
+        # *   n      *  s1 s2
         v, = parent.values
         a, b = parent.children
         if a is node:
+            assert median <= v
             parent.values = [median, v]
             parent.children = [lower_sibling, upper_sibling, b]
         else:
+            assert v <= median
             parent.values = [v, median]
             parent.children = [a, lower_sibling, upper_sibling]
     else:
         # Fix:
         #                                   |
         #                                   p
-        #    |             |               [k]
+        #    |             |               [v]
         #    p             p              /   \
-        #  [h,k]        [h,k,m]         [h]   [m]
+        #  [u,v]        [u,v,m]         [u]   [m]
         #  / | \   =>   / | | \    =>   / \   / \
-        # *  *  n      *  * s  n       *   * s   n
+        # *  *  n      *  * s1 s2      *   * s1  s2
         u, v = parent.values
         a, b, c = parent.children
         if a is node:
+            assert median <= u <= v
             proxy_1 = Node(median, parent)
             proxy_2 = Node(v, parent)
             parent.values = [u]
             parent.children = [proxy_1, proxy_2]
             proxy_1.children = [lower_sibling, upper_sibling]
             proxy_2.children = [b, c]
+            lower_sibling.parent = proxy_1
+            upper_sibling.parent = proxy_1
+            b.parent = proxy_2
+            c.parent = proxy_2
         elif b is node:
+            assert u <= median <= v
             proxy_1 = Node(u, parent)
             proxy_2 = Node(v, parent)
             parent.values = [median]
             parent.children = [proxy_1, proxy_2]
             proxy_1.children = [a, lower_sibling]
             proxy_2.children = [upper_sibling, c]
+            a.parent = proxy_1
+            lower_sibling.parent = proxy_1
+            upper_sibling.parent = proxy_2
+            c.parent = proxy_2
         else:
+            assert u <= v <= median
             proxy_1 = Node(u, parent)
             proxy_2 = Node(median, parent)
             parent.values = [v]
             parent.children = [proxy_1, proxy_2]
             proxy_1.children = [a, b]
             proxy_2.children = [lower_sibling, upper_sibling]
+            a.parent = proxy_1
+            b.parent = proxy_1
+            lower_sibling.parent = proxy_2
+            upper_sibling.parent = proxy_2
 
     return parent
-
-
-def split(node):
-    """
-    Split over-keyed node.
-    """
-    assert len(node.values) == 3
-
-    lower, median, upper = node.values
-    left, middle, right = node.children
-
-    sibling = Node(lower, parent)
-    node.values = [upper]
-
-    sibling.children = [left]
-    node.children = [right]
-
-    if node.parent is None:
-        parent = Node(median)
-        parent.children = [sibling, node]
-        sibling.parent = node.parent = parent
-        return parent
-
-    if len(node.parent.children) == 1:
-        node.parent.children = [sibling, node]
-        node.parent.values.append(median)
-        node.parent.values.sort()
-    else:
-        a, b = node.parent.children
-        if a is node:
-            node.parent.children = [sibling, node, b]
-        else:
-            node.parent.children = [a, sibling, node]
-        node.parent.values.append(median)
-        node.parent.values.sort()
-
-
-    if len(node.parent.values) == 3:
-        split(node.parent)
-
-    return node.parent
 
 
 def find_leaf(node, value):

@@ -2,7 +2,7 @@ source "virtualbox-iso" "debian" {
   guest_os_type = "Debian_64"
   iso_url = "https://cdimage.debian.org/debian-cd/10.6.0-live/amd64/iso-hybrid/debian-live-10.6.0-amd64-standard.iso"
   iso_checksum = "md5:3dc061d709e4a7c7bb119942fadcbed8"
-  disk_size = 4096
+  disk_size = 12288
   memory = 1024
   ssh_username = "user"
   ssh_password = "live"

@@ -31,11 +31,13 @@ mount -t proc  none ${ROOT}/proc
 mount -t sysfs none ${ROOT}/sys
 mount --bind   /dev ${ROOT}/dev
 
-chroot ${ROOT} apt-get install -y --no-install-recommends grub-pc linux-image-amd64 locales
+chroot ${ROOT} apt-get install -y --no-install-recommends locales
+sed -i '/en_US\.UTF-8/ s/^# *//' ${ROOT}/etc/locale.gen
+chroot ${ROOT} locale-gen
+
+chroot ${ROOT} apt-get install -y --no-install-recommends grub-pc linux-image-amd64
 chroot ${ROOT} grub-install ${DISK}
 chroot ${ROOT} update-grub
-
-sed -i '/en_US\.UTF-8/ s/^# *//' ${ROOT}/etc/locale.gen
 
 cat > ${ROOT}/etc/fstab << END
 ${DISK}2 /     ext4  defaults 0 1

@@ -96,7 +96,8 @@ END
 
 # MINIMAL SYSTEM FOR CLOUDINIT -----------------------------------------------
 
-chroot ${ROOT} apt-get install -y --no-install-recommends cloud-init openssh-server
+# cloud-guest-utils is required for growpart.
+chroot ${ROOT} apt-get install -y --no-install-recommends cloud-init cloud-guest-utils openssh-server sudo
 chroot ${ROOT} passwd -d root
 
 cat > ${ROOT}/etc/ssh/sshd_config << END

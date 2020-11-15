@@ -1,2 +1,4 @@
 /packer_cache
 /output-*
+terraform.tfstate
+terraform.tfstate.backup

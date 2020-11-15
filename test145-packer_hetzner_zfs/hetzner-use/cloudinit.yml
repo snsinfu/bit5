@@ -1,0 +1,27 @@
+#cloud-config
+
+timezone: UTC
+
+write_files:
+  - path: /etc/ssh/sshd_config
+    content: |
+      PermitRootLogin no
+      PasswordAuthentication no
+      ChallengeResponseAuthentication no
+      UsePAM yes
+      Subsystem sftp internal-sftp
+
+ssh_authorized_keys:
+  - "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGZ3csbA3hwqx+66aji0paL9wOYy3zB24YzAqYlJlMh2 mac16"
+
+system_info:
+  default_user:
+    name: hetzner
+    shell: /bin/bash
+    sudo: "ALL=(ALL) NOPASSWD: ALL"
+
+# Hetzner's vendor config forcibly modifies sshd_config to allow password root
+# login. Fix that. See: /var/lib/cloud/instance/vendor-data.txt
+#runcmd:
+#  - sed -i '/^PermitRootLogin/        s/yes/no/' /etc/ssh/sshd_config
+#  - sed -i '/^PasswordAuthentication/ s/yes/no/' /etc/ssh/sshd_config

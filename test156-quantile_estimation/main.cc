@@ -35,7 +35,16 @@ public:
     {
         _sample_count++;
 
-        // XXX: This update procedure may be optimized.
+        // Update desired quantile positions according to the assignments:
+        //   Marker 0:  Minimum
+        //   Marker 1:  p/2-quantile
+        //   Marker 2:  p-quantile
+        //   Marker 3:  (p+1)/2-quantile
+        //   Marker 4:  Maximum
+        //
+        // XXX: I think these calculations are not that hot compared to the
+        // invalidation logic, but the article says this part may be optimized
+        // a bit using an extra array.
         auto const last_position = double(_sample_count) - 1;
         _marker_desired_positions[0] = 0;
         _marker_desired_positions[1] = last_position * _probability / 2;
@@ -79,6 +88,7 @@ private:
             _marker_positions[i]++;
         }
 
+        // Shift non-extreme markers.
         for (size_t i = 1; i < marker_count - 1; i++) {
             double const error = _marker_desired_positions[i] - double(_marker_positions[i]);
 
@@ -95,7 +105,11 @@ private:
                     _marker_heights[i] = linear(i, direction);
                 }
 
-                _marker_positions[i]++;
+                if (direction > 0) {
+                    _marker_positions[i]++;
+                } else {
+                    _marker_positions[i]--;
+                }
             }
         }
     }
@@ -148,9 +162,9 @@ int main()
     p2_quantile_estimator median(0.5);
 
     std::mt19937_64 random;
-    std::uniform_real_distribution<double> distr;
+    std::exponential_distribution<double> distr;
 
-    for (int i = 0; i < 10000; i++) {
+    for (long i = 0; i < 100'000'000L; i++) {
         median.update(distr(random));
     }
 

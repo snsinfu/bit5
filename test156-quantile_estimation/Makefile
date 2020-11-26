@@ -5,7 +5,8 @@ CXXFLAGS = \
   -Wextra \
   -Wconversion \
   -Wsign-conversion \
-  -O2
+  -O2 \
+  -march=native
 
 .PHONY: run clean
 

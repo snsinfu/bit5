@@ -2,4 +2,4 @@
 
 OK, I found the basis.
 
-![Petrie projection of the 6-cube](output.png)
+![Petrie projection of the 7-cube](output.png)

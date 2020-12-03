@@ -3,7 +3,7 @@ import numpy as np
 
 
 def main():
-    dimension = 6
+    dimension = 7
 
     angles = np.pi * np.arange(dimension) / dimension
     basis = np.transpose([np.cos(angles), np.sin(angles)])
@@ -50,7 +50,8 @@ def hypercube(dimension):
 
 
 def draw_graph(ax, edges, points, labels):
-    label_margin = 0.03
+    label_margin = 0.05
+    centroid = points.mean(0)
 
     ax.scatter(
         points[:, 0],
@@ -63,15 +64,18 @@ def draw_graph(ax, edges, points, labels):
     )
 
     for point, label in zip(points, labels):
+        outer = point - centroid
+        outer = outer / np.linalg.norm(outer)
+
         ax.text(
-            point[0] + label_margin,
-            point[1] - label_margin,
+            point[0] + outer[0] * label_margin,
+            point[1] + outer[1] * label_margin,
             label,
-            ha="left",
-            va="top",
+            ha="center",
+            va="center",
             fontsize=10,
-            color="#54a",
-            zorder=2,
+            color="#5a4",
+            zorder=3,
         )
 
     for i, j in edges:
@@ -79,7 +83,7 @@ def draw_graph(ax, edges, points, labels):
             [points[i, 0], points[j, 0]],
             [points[i, 1], points[j, 1]],
             lw=0.5,
-            color="#222",
+            color="#aaa",
             zorder=1,
         )
 

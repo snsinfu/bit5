@@ -4,8 +4,13 @@ import numpy as np
 
 def main():
     dimension = 7
+    subst = 0b101010 # Use this to coherently substitute vertex IDs
+    distortion = 0 # Increase this to mitigate vertex overlaps by distorting embedding
+
+    assert subst < 2 ** dimension
 
     angles = np.pi * np.arange(dimension) / dimension
+    angles += np.linspace(0, distortion, len(angles))
     basis = np.transpose([np.cos(angles), np.sin(angles)])
 
     vertex_count = 2 ** dimension
@@ -15,7 +20,7 @@ def main():
     edges = hypercube(dimension)
 
     # vertex_labels = ["".join(str(digit) for digit in code) for code in vertex_codes]
-    vertex_labels = [str(vid) for vid in vertex_ids]
+    vertex_labels = [str(vid ^ subst) for vid in vertex_ids]
 
     fig = plt.figure(figsize=(12, 12))
     ax = fig.add_axes([0, 0, 1, 1])

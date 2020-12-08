@@ -5,6 +5,7 @@ fn main() {
     //   |
     // 2 o---o 3
     let edges: Vec<(usize, usize)> = vec![(0, 1), (0, 2), (0, 4), (1, 4), (2, 3)];
+    let adjacents = make_adjacent_lists(&edges, 5);
     let target = 1;
 
     // Number of pebbles on each vertex.
@@ -18,7 +19,7 @@ fn main() {
 
         for (i, &pebble) in pebbles.iter().enumerate() {
             if pebble >= 2 {
-                let j = choose_adjacent(&edges, i, step);
+                let j = choose_adjacent(&adjacents[i], step);
                 pebbles[i] -= 2;
                 pebbles[j] += 1;
                 ok = true;
@@ -43,22 +44,21 @@ fn main() {
     }
 }
 
-fn choose_adjacent(edges: &Vec<(usize, usize)>, vertex: usize, seed: i32) -> usize {
-    // Ugly allocating algorithm! Here adjacency list is created EACH TIME the
-    // function is called. I should have used adjacency list representation in
-    // the first place instead of edge list.
-    let mut adjacents = Vec::<usize>::new();
+fn make_adjacent_lists(edges: &Vec<(usize, usize)>, vertices: usize) -> Vec<Vec<usize>> {
+    let mut lists: Vec<Vec<usize>> = Vec::new();
+
+    lists.resize(vertices, vec![]);
 
     for &(i, j) in edges {
-        if i == vertex {
-            adjacents.push(j);
-        }
-        if j == vertex {
-            adjacents.push(i);
-        }
+        lists[i].push(j);
+        lists[j].push(i);
     }
 
-    // Use seed (arbitrary integral value) is used to choose adjacent vertex
-    // pseudo-randomly. Rust does not have RNG in the stdlib...
-    adjacents[(seed as usize) % adjacents.len()]
+    lists
+}
+
+fn choose_adjacent(adjacents: &Vec<usize>, step: i32) -> usize {
+    // Rust does not have RNG in the stdlib. Here I use game step as poor-man's
+    // pseudo-random value...
+    adjacents[(step as usize) % adjacents.len()]
 }

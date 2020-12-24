@@ -10,7 +10,7 @@ $$
     \overline{\Delta x^2}(\tau)
     =
     \left\langle
-        x(\tau) - x(0)
+        \left( x(\tau) - x(0) \right)^2
     \right\rangle .
 $$
 The average is taken with respect to possible instances of the stochastic
@@ -47,7 +47,7 @@ $$
     C(\tau)
     =
     \left\langle
-      v(\tau) - v(0)
+      v(\tau) v(0)
     \right\rangle
 $$
 where $v(t)$ is the velocity of the particle, i.e., $v(t) = dx(t)/dt$. It
@@ -57,5 +57,71 @@ Interestingly, VACF is related to diffusion coefficient in the following way:
 $$
     D(\tau) = \int_0^\tau C(t) \,dt ;
 $$
-or, equivalently, ${ C(\tau) = dD(\tau)/d\tau }$.
-
+or, equivalently, ${ C(\tau) = dD(\tau)/d\tau }$. This relation is relatively
+easy to show. Firstly, note:
+$$
+    x(\tau) - x(0) = \int_0^\tau v(t) \, dt .
+$$
+Injecting this into the definition of MSD gives
+$$
+\begin{aligned}
+    D(\tau)
+    & =
+        \frac{1}{2} \frac{d}{d\tau}
+        \left\langle
+            \left( x(\tau) - x(0) \right)^2
+        \right\rangle
+    \\
+    & =
+        \frac{1}{2} \frac{d}{d\tau}
+        \left\langle
+            \left( \int_0^\tau v(t) \, dt \right)^2
+        \right\rangle
+    \\
+    & =
+        \frac{1}{2}
+        \left\langle
+            \frac{d}{d\tau}
+            \left( \int_0^\tau v(t) \, dt \right)^2
+        \right\rangle
+    \\
+    & =
+        \left\langle
+            v(\tau)
+            \int_0^\tau v(t) \, dt
+        \right\rangle
+    \\
+    & =
+        \int_0^\tau
+        \left\langle
+            v(\tau)
+            v(t)
+        \right\rangle
+        dt .
+\end{aligned}
+$$
+Now, by time shift invariance, we may shift time uniformly by $-t$ in the
+bracket. So, we get
+$$
+\begin{aligned}
+    D(\tau)
+    & =
+        \int_0^\tau
+        \left\langle
+            v(\tau - t)
+            v(0)
+        \right\rangle
+        dt
+    \\
+    & =
+        \int_0^\tau
+        \left\langle
+            v(t)
+            v(0)
+        \right\rangle
+        dt
+    \\
+    & =
+        \int_0^\tau C(t) \, dt .
+\end{aligned}
+$$

@@ -125,3 +125,63 @@ $$
         \int_0^\tau C(t) \, dt .
 \end{aligned}
 $$
+
+So, the second derivative of MSD is VACF!
+$$
+    \frac{d^2}{d\tau^2}
+    \left\langle
+        \left( x(\tau) - x(0) \right)^2
+    \right\rangle
+    =
+    C(\tau) .
+$$
+
+
+## Potential hessian
+
+The asymptotic behavior of short-time VACF ($\tau \to 0$) gives mechanistic
+insight into the system. With Taylor expansion,
+$$
+\begin{aligned}
+    C(\tau)
+    & =
+        \left\langle
+            v(0)
+            v(\tau)
+        \right\rangle
+    \\
+    & =
+        \left\langle
+            v(-\tau / 2)
+            v(\tau / 2)
+        \right\rangle
+    \\
+    & \simeq
+        \left\langle
+            \left( v(0) - \frac{\tau}{2} v^\prime(0) \right)
+            \left( v(0) + \frac{\tau}{2} v^\prime(0) \right)
+        \right\rangle
+    \\
+    & =
+        \left\langle
+            { v(0) }^2
+        \right\rangle
+        -
+        \frac{\tau^2}{4}
+        \left\langle
+            { v^\prime(0) }^2
+        \right\rangle
+        .
+\end{aligned}
+$$
+If the population is the canonical ensemble, we have
+$$
+    \left\langle { v(0) }^2 \right\rangle = \frac{k_\mathrm{B} T}{2} .
+$$
+And, if the particle obey the Langevin dynamics
+$$
+    v^\prime(0)
+    =
+    -\frac{1}{m} \nabla V - \gamma v(0) + \sigma \,\frac{dW}{dt} ,
+$$
+...? Then?

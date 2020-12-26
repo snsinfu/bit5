@@ -51,7 +51,7 @@ int main(void)
 
     // Fill leaves.
     for (size_t i = 0; i < num_elements; i++) {
-        sumtree[leaf_count + i] = values[i];
+        sumtree[leaf_count + i - 1] = values[i];
     }
 
     // Construct sum tree.
@@ -71,7 +71,42 @@ int main(void)
     }
 
     // Print array representation of the tree.
+    printf("Tree\n");
     for (size_t i = 0; i < tree_size; i++) {
         printf("%2zu  %g\n", i, sumtree[i]);
     }
+
+    // Find the cumulative-sum interval that covers a specific point.
+    double const value_to_find = 0.5 * sumtree[0];
+
+    double needle = value_to_find;
+    size_t position = 0;
+
+    for (;;) {
+        size_t const lchild = 2 * (position + 1) - 1;
+        size_t const rchild = 2 * (position + 1);
+
+        if (lchild >= tree_size) {
+            break;
+        }
+
+        if (needle < sumtree[lchild]) {
+            position = lchild;
+        } else {
+            needle -= sumtree[lchild];
+            position = rchild;
+        }
+    }
+    size_t const leaf_index = position - leaf_count + 1;
+
+    double lower_bound = 0;
+    double upper_bound;
+    for (size_t i = 0; i < leaf_index; i++) {
+        lower_bound += values[i];
+    }
+    upper_bound = lower_bound + values[leaf_index];
+
+    printf("\n");
+    printf("Find %g\n", value_to_find);
+    printf(" -> %zu: [%g, %g)\n", leaf_index, lower_bound, upper_bound);
 }

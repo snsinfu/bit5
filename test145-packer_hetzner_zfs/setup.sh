@@ -113,6 +113,13 @@ chroot ${ROOT} systemctl enable cloud-init
 chroot ${ROOT} systemctl enable cloud-config
 chroot ${ROOT} systemctl enable cloud-final
 
+# cloud-init (cc_growpart) cannot auto-detect zpool device for resizing.
+cat > ${ROOT}/etc/cloud/cloud.cfg.d/10_zpool.cfg << END
+growpart:
+  devices:
+    - ${DISK}3
+END
+
 # CLEANUP --------------------------------------------------------------------
 
 umount ${ROOT}/boot

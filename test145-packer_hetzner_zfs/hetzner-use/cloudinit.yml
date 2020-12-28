@@ -2,11 +2,6 @@
 
 timezone: UTC
 
-growpart:
-  mode: auto
-  devices:
-    - /dev/sda3
-
 write_files:
   - path: /etc/ssh/sshd_config
     content: |

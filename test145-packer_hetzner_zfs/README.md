@@ -91,3 +91,42 @@ Related?
 
 - https://bugs.launchpad.net/cloud-init/+bug/1799953
 - https://github.com/canonical/cloud-utils/pull/9
+
+
+### A fix
+
+To correctly work, cloudinit needs to guess that (1) the zpool containing
+(2) the dataset which is mounted to "/" (3) has only one device and (4) it's
+resizable. Maybe that's too much to ask; it would be hard to make it work
+robustly on various environment.
+
+Following [the documentation][doc], I manually specified cloud-init to grow
+`/dev/sda3` via cloud-config user data:
+
+```yaml
+growpart:
+  mode: auto
+  devices:
+    - /dev/sda3
+```
+
+and it now works! Both the partition and zpool are resized to fit to the disk.
+
+```
+hetzner@debian:~$ lsblk
+NAME   MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sda      8:0    0 38.2G  0 disk
+├─sda1   8:1    0    1M  0 part
+├─sda2   8:2    0  512M  0 part /boot
+└─sda3   8:3    0 37.7G  0 part
+...
+hetzner@debian:~$ sudo zfs list
+NAME        USED  AVAIL     REFER  MOUNTPOINT
+data        752M  35.7G       96K  /data
+data/root   751M  35.7G      751M  /
+```
+
+Hard-coding `sda3` may be fragile especially when one attaches a volume to an
+instance. IME volume is bound to `sdb` so it could be safe but I'm not sure.
+
+[doc]: https://cloudinit.readthedocs.io/en/latest/topics/examples.html#grow-partitions

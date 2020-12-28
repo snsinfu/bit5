@@ -129,4 +129,7 @@ data/root   751M  35.7G      751M  /
 Hard-coding `sda3` may be fragile especially when one attaches a volume to an
 instance. IME volume is bound to `sdb` so it could be safe but I'm not sure.
 
+--> Maybe just baking the cloud-config into the system during installation
+fixes the problem without writing user-data. TODO.
+
 [doc]: https://cloudinit.readthedocs.io/en/latest/topics/examples.html#grow-partitions

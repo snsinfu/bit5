@@ -12,23 +12,36 @@ ARTIFACTS = \
   _app.ok
 
 
-.PHONY: test info clean
+.PHONY: test clean
+.PHONY: apply delete
+.PHONY: deployment-info ingress-info
 
 test: _app.ok
 	curl -fsS -H "Host: $(TEST_HOST)" $(TEST_URL)
-
-info: _app.ok
-	$(KUBECTL) describe ingress -n myapp
 
 clean:
 	vagrant destroy -f
 	rm -rf $(ARTIFACTS)
 
-_app.ok: _provision.ok
+apply: _app.ok
+	@:
+
+delete: _provision.ok
+	$(KUBECTL) delete -f app.yaml
+	rm -f _app.ok
+
+deployment-info: _app.ok
+	$(KUBECTL) describe deployment -n myapp
+
+ingress-info: _app.ok
+	$(KUBECTL) describe ingress -n myapp
+
+
+_app.ok: _provision.ok app.yaml
 	$(KUBECTL) apply -f app.yaml
 	touch $@
 
-_provision.ok: _box.ok
+_provision.ok: _box.ok provision.yml
 	$(VAGRANT) provision
 	touch $@
 

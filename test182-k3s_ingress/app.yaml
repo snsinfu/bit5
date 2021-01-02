@@ -13,6 +13,8 @@ kind: Deployment
 metadata:
   namespace: myapp
   name: main
+  labels:
+    app: nginx
 
 spec:
   replicas: 1
@@ -25,7 +27,7 @@ spec:
         app: nginx
     spec:
       containers:
-      - name: www
+      - name: nginx
         image: nginx:1
         ports:
         - name: nginx
@@ -46,7 +48,7 @@ spec:
     port: 80
     targetPort: nginx
   selector:
-    app: myapp
+    app: nginx
 
 
 ---
@@ -56,6 +58,8 @@ kind: Ingress
 metadata:
   namespace: myapp
   name: main
+  annotations:
+    kubernetes.io/ingress.class: traefik
 
 spec:
   rules:
@@ -64,5 +68,5 @@ spec:
       paths:
       - path: /
         backend:
-          serviceName: myapp
+          serviceName: main
           servicePort: http

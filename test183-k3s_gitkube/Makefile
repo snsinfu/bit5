@@ -12,8 +12,8 @@ ARTIFACTS = \
 
 .PHONY: all clean remote check
 
-all: _remote.txt
-	@cat _remote.txt
+all: _remote.ok
+	@:
 
 clean:
 	vagrant destroy -f

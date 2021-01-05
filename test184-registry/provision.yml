@@ -1,0 +1,52 @@
+- hosts: all
+  become: true
+
+  vars:
+#
+# I assumed that I could set up an HTTP registry with a dummy authentication
+# but the docs say it's not supported [1]. Indeed, trying to `docker login` to
+# the created registry resulted in a segfault (?!). The callstack looked very
+# similar to that reported in [2].
+#
+# [1]: https://docs.docker.com/registry/insecure/#deploy-a-plain-http-registry
+# [2]: https://forum.openmediavault.org/index.php?thread/37252-unable-to-run-docker-login-after-fresh-install/
+#
+#   # Auth information
+#   registry_user: user
+#   registry_pass: p4ssw0rd
+#   registry_salt: yRxzNBdfbXdoxQJT7jhaL.
+#     # bcrypt salt is 22 characters long B64 string that ends with [./AB].
+#     # https://passlib.readthedocs.io/en/stable/lib/passlib.hash.bcrypt.html#deviations
+
+  tasks:
+    - name: docker-registry is installed
+      apt:
+        name: docker-registry
+        state: present
+
+    - name: registry config is up
+      copy:
+        src: docker-registry.config.yml
+        dest: /etc/docker/registry/config.yml
+      notify: restart registry
+
+# Can't enable authentication unless TLS is set up.
+#  - name: registry password is up
+#    copy:
+#      content: |
+#        {{ registry_user }}:{{ registry_pass | password_hash('bcrypt', registry_salt) }}
+#      dest: /etc/docker/registry/htpasswd
+#      mode: 600
+#    notify: restart registry
+
+    - name: registry is activated
+      service:
+        name: docker-registry
+        state: started
+        enabled: true
+
+  handlers:
+    - name: restart registry
+      service:
+        name: docker-registry
+        state: restarted

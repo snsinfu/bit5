@@ -1,0 +1,22 @@
+apiVersion: gitkube.sh/v1alpha1
+kind: Remote
+
+metadata:
+  name: gitkube
+  namespace: myapp
+
+spec:
+  authorizedKeys:
+  - "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILnsj1rfxYMcAN9Lmy0fdfhwub4t0d3UWs9k1NClth/C sample_key"
+
+  registry:
+    url: http://172.19.1.10:5000/v2
+
+  deployments:
+  - name: myapp
+    containers: 
+    - name: myapp-main
+      dockerfile: test183-k3s_gitkube/myapp/Dockerfile
+
+  manifests:
+    path: test183-k3s_gitkube/manifests/

@@ -6,19 +6,12 @@ metadata:
   name: gitkubed
 
 spec:
-  type: NodePort
+  type: LoadBalancer
   ports:
-  - port: 22
+  - port: 5022
     targetPort: 22
   selector:
     app: gitkubed
-
-
-# k3s v1.20.0+k3s2 does not have TCP LoadBalancer (Traefik v2). So let's use
-# NodePort for now. This situation will be resolved in the upcoming v1.20.2
-# release.
-# https://github.com/k3s-io/k3s/issues/1141
-# https://github.com/k3s-io/k3s/milestone/63
 
 
 # ----------------------------------------------------------------------------

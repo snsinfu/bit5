@@ -25,12 +25,18 @@
         creates: /usr/local/bin/k3s
       environment:
         INSTALL_K3S_VERSION: "{{ k3s_version }}"
-        INSTALL_K3S_EXEC: "server --node-ip {{ k3s_address }}"
+        INSTALL_K3S_EXEC: "server --node-ip {{ host_address }} --write-kubeconfig-mode 644"
+
+    - name: k3s registries config is up
+      copy:
+        src: k3s-registries.yaml
+        dest: /etc/rancher/k3s/registries.yaml
+      notify: restart k3s
 
     - name: k3s remote access config is generated
       shell: |
         sed                                \
-          's/127.0.0.1/{{ k3s_address }}/' \
+          's/127.0.0.1/{{ host_address }}/' \
           /etc/rancher/k3s/k3s.yaml        \
         > k3s-remote.yaml
       args:
@@ -48,6 +54,12 @@
     - name: registry is installed
       apt:
         name: docker-registry
+        state: present
+
+    - name: registry is registered in the hosts file
+      lineinfile:
+        path: /etc/hosts
+        line: "{{ host_address }} registry"
         state: present
 
 
@@ -79,6 +91,17 @@
       apt:
         name: docker-ce
         state: present
+
+    - name: insecure registry is configured
+      copy:
+        content: |
+          {
+            "insecure-registries": [
+              "registry:5000"
+            ]
+          }
+        dest: /etc/docker/daemon.json
+      notify: restart docker
 
 
     # Git
@@ -133,3 +156,15 @@
         owner: git
         group: git
         mode: 0755
+
+
+  handlers:
+    - name: restart k3s
+      service:
+        name: k3s
+        state: restarted
+
+    - name: restart docker
+      service:
+        name: docker
+        state: restarted

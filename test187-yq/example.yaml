@@ -1,0 +1,16 @@
+namespace: myapp
+
+deployments:
+- name: web
+  containers:
+  - image: registry:5000/myapp-web
+    build: web/Dockerfile
+
+- name: qrunner
+  containers:
+  - image: registry:5000/myapp-qrunner
+    build: qrunner/Dockerfile
+
+manifests:
+  path: manifests
+  kustomize: true

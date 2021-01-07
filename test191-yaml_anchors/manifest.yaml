@@ -1,0 +1,25 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+
+metadata:
+  namespace: myapp-staging
+  name: web
+  annotations:
+    kubernetes.io/ingress.class: traefik
+    cert-manager.io/cluster-issuer: letsencrypt-staging
+  labels:
+    host: &host myapp.staging.example.com
+
+spec:
+  tls:
+    - secretName: web-tls
+      hosts:
+        - *host
+  rules:
+    - host: *host
+      http:
+        paths:
+          - path: /
+            backend:
+              serviceName: web
+              servicePort: 80

@@ -1,0 +1,71 @@
+---
+apiVersion: v1
+kind: Namespace
+
+metadata:
+  name: myapp
+
+
+---
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: web
+  namespace: myapp
+  labels: &labels
+    app: web
+
+spec:
+  selector:
+    matchLabels: *labels
+  template:
+    metadata:
+      labels: *labels
+    spec:
+      containers:
+        - name: web
+          image: nginx:1
+          ports:
+            - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+
+metadata:
+  name: web
+  namespace: myapp
+
+spec:
+  ports:
+    - name: http
+      port: 80
+  selector:
+    app: web
+
+
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+
+metadata:
+  name: web
+  namespace: myapp
+  annotations:
+    kubernetes.io/ingress.class: traefik
+    cert-manager.io/cluster-issuer: letsencrypt-staging
+
+spec:
+  tls:
+    - secretName: myapp-tls
+      hosts:
+        - myapp.test190.illil.io
+  rules:
+    - host: myapp.test190.illil.io
+      http:
+        paths:
+          - path: /
+            backend:
+              serviceName: web
+              servicePort: 80

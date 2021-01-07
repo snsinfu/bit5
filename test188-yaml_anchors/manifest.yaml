@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: web
+
+  # These are Deployment labels, so they are not necessarily identical to pod
+  # labels per se. However, for simple deployments that is almost the case. So,
+  # maybe it is a good idea to use YAML anchoring here? Are there pitfalls?
+  labels: &labels
+    app: web
+    tier: frontend
+
+  # ... Some indeed use anchors:
+  #
+  # - https://qiita.com/paper2/items/9664e87c5c2cdc8d32f7
+  # - https://devops.stackexchange.com/q/12837
+  #
+  # Of course, Helm charts would be better for real templating/YAML generation
+  # but YAML anchoring looks to be sufficient for simple things like uniform
+  # labelling.
+
+spec:
+  replicas: 1
+  selector:
+    # I believe this is always identical to .spec.template.metadata.labels.
+    matchLabels: *labels
+  template:
+    metadata:
+      # We can extend labels as follows. But if your system is so complex that
+      # needs such a labelling, you would better use more sophisticated config
+      # generation mechanism. So, if you use YAML anchoring, just use simple
+      # anchoring `labels: *labels` instead of this...
+      labels:
+        <<: *labels
+        foo: bar
+    spec:
+      containers:
+      - name: web
+        image: myapp-web
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 80

@@ -68,3 +68,36 @@ Maybe I misunderstand the `NoSchedule` effect in `tolerations` directive:
 
 I thought it means that traefik won't scheduled on nodes having `master` role.
 But in the test cluster it's just scheduled on every node.
+
+
+## Traefik
+
+Immediately after `vagrant up`:
+
+```console
+$ kubectl get pods -A -o wide
+NAME                                      READY   STATUS      RESTARTS   AGE   IP          NODE     NOMINATED NODE   READINESS GATES
+local-path-provisioner-7c458769fb-dm8wm   1/1     Running     0          26m   10.42.0.5   master   <none>           <none>
+metrics-server-86cbb8457f-p9v6q           1/1     Running     0          26m   10.42.0.3   master   <none>           <none>
+coredns-854c77959c-2k2mz                  1/1     Running     0          26m   10.42.0.2   master   <none>           <none>
+helm-install-traefik-l4zgq                0/1     Completed   0          26m   10.42.0.4   master   <none>           <none>
+svclb-traefik-qptzv                       2/2     Running     0          26m   10.42.0.7   master   <none>           <none>
+traefik-6f9cbd9bd4-jghsw                  1/1     Running     0          26m   10.42.0.6   master   <none>           <none>
+svclb-traefik-l2gpj                       2/2     Running     0          24m   10.42.1.2   worker   <none>           <none>
+```
+
+traefik is running on `master`. Restarting traefik deployment migrates traefik
+from `master` to `worker`:
+
+```console
+$ kubectl rollout restart -n kube-system deployment/traefik
+$ kubectl get pods -A -o wide
+NAME                                      READY   STATUS      RESTARTS   AGE   IP          NODE     NOMINATED NODE   READINESS GATES
+local-path-provisioner-7c458769fb-dm8wm   1/1     Running     0          28m   10.42.0.5   master   <none>           <none>
+metrics-server-86cbb8457f-p9v6q           1/1     Running     0          28m   10.42.0.3   master   <none>           <none>
+coredns-854c77959c-2k2mz                  1/1     Running     0          28m   10.42.0.2   master   <none>           <none>
+helm-install-traefik-l4zgq                0/1     Completed   0          28m   10.42.0.4   master   <none>           <none>
+svclb-traefik-qptzv                       2/2     Running     0          27m   10.42.0.7   master   <none>           <none>
+svclb-traefik-l2gpj                       2/2     Running     0          26m   10.42.1.2   worker   <none>           <none>
+traefik-7947b95cd6-jmsvn                  1/1     Running     0          48s   10.42.1.3   worker   <none>           <none>
+```

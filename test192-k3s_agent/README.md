@@ -28,9 +28,8 @@ Service load balancer seems to be running on both master and worker node.
 ```console
 $ kubectl get pods -A -o wide
 ```
-
-Though, deploying nginx app with `replica: 2` creates two pods on only the
-worker node:
+Why it's scheduled on the master node? Deploying nginx app with `replica: 2`
+creates two pods on only the worker node. The master node is not used.
 
 ```console
 $ kubectl apply -f app.yaml
@@ -40,12 +39,12 @@ web-795f7f9cdd-dlzgm   1/1     Running   0          58s   10.42.1.3   worker   <
 web-795f7f9cdd-hbrg6   1/1     Running   0          4s    10.42.1.4   worker   <none>           <none>
 ```
 
-Though, svclb-traefik is still running on the master. I expect service load
+Traefik, on the other hand, is still running on the master. I expect service load
 balancer to terminate on the master node because no external traffic should
 hit the master node. Maybe old traefik is still running on the master node?
 
-I restarted the master node and svclb-traefik is still running on the master
-node.
+I restarted the master node. Traefik seems to be migrated to the worker node
+but svclb-traefik is still running on the master node.
 
 ```console
 $ vagrant reload master

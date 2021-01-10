@@ -1,0 +1,4 @@
+# https://rancher.com/docs/k3s/latest/en/installation/install-options/server-config/
+node-ip: "{{ internal_address }}"
+node-external-ip: "{{ external_address }}"
+tls-san: "{{ external_address }}"

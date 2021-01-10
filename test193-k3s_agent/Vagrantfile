@@ -1,0 +1,39 @@
+VM_BOX = "debian/buster64"
+VM_MEMORY = 2048
+VM_CPUS = 2
+MASTER_IP = "172.29.1.10"
+WORKER_IP = "172.29.1.11"
+
+Vagrant.configure("2") do |config|
+  config.vm.provider "virtualbox" do |v|
+    v.memory = VM_MEMORY
+    v.cpus = VM_CPUS
+  end
+
+  config.vm.define "master" do |master|
+    master.vm.box = VM_BOX
+    master.vm.hostname = "master"
+    master.vm.network :private_network, ip: MASTER_IP
+    master.vm.provision :ansible do |ansible|
+      ansible.playbook = "provision.yml"
+      ansible.extra_vars = {
+        internal_address: MASTER_IP,
+        external_address: MASTER_IP,
+      }
+    end
+  end
+
+  config.vm.define "worker" do |worker|
+    worker.vm.box = VM_BOX
+    worker.vm.hostname = "worker"
+    worker.vm.network :private_network, ip: WORKER_IP
+    worker.vm.provision :ansible do |ansible|
+      ansible.playbook = "provision.yml"
+      ansible.extra_vars = {
+        internal_address: WORKER_IP,
+        external_address: WORKER_IP,
+        k3s_server_address: MASTER_IP,
+      }
+    end
+  end
+end

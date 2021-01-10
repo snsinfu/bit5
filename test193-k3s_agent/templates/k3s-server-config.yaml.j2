@@ -2,3 +2,7 @@
 node-ip: "{{ internal_address }}"
 node-external-ip: "{{ external_address }}"
 tls-san: "{{ external_address }}"
+node-taint:
+  - CriticalAddonsOnly=true:NoExecute
+  - node-role.kubernetes.io/master=true:NoSchedule
+  - node-role.kubernetes.io/control-plane=true:NoSchedule

@@ -116,3 +116,58 @@ cert-manager-webhook-b5d47865d-kgdh9       worker   10.42.1.6
 I'm still uncertain if the taint could be applied to the master node when
 installing k3s server (by passing --node-taint option). Traefik tolerates
 master taint, so I expect it would work, but it needs an experiment.
+
+→ See the following issue and PR:
+
+- https://github.com/k3s-io/k3s/issues/1401
+- https://github.com/k3s-io/k3s/pull/1275
+
+So, necessary tolerations are already set. It should work.
+
+
+## CritialAddonsOnly
+
+The `master` toleration will soon be renamed to `control-plane`:
+
+- https://github.com/kubernetes/kubeadm/issues/2200
+- https://github.com/kubernetes/enhancements/blob/master/keps/sig-cluster-lifecycle/kubeadm/2067-rename-master-label-taint/README.md
+
+Also, k3s documentation suggests to use `CriticalAddonsOnly=true:NoExecute`
+taint. Indeed, the k3s PR above also adds tolerations against this taint.
+
+- https://rancher.com/docs/k3s/latest/en/installation/ha/ (search `node-taint`
+  in the page)
+
+So, as for k3s, we would better use the `CriticalAddonsOnly` taint. Though,
+it would also be beneficial to set standard `master` or `control-plane` taint
+for non-bundled critical components to be added in the future.
+
+Anyway, I added taints to k3s server configuration. It allowed automatic
+migration of `traefik` pod to the worker node without manual restarting.
+Great!
+
+```console
+$ scripts/pods.sh -A
+NAME                                      NODE     IP
+local-path-provisioner-7c458769fb-7cphj   master   10.42.0.3
+metrics-server-86cbb8457f-m55bc           master   10.42.0.4
+coredns-854c77959c-wj9lv                  master   10.42.0.2
+helm-install-traefik-kq58g                worker   10.42.1.2
+svclb-traefik-64lmx                       worker   10.42.1.4
+traefik-6f9cbd9bd4-vm9fl                  worker   10.42.1.3
+```
+
+Of course, cert-manager is scheduled to the worker node:
+
+```console
+$ kubectl apply -f https://github.com/jetstack/cert-manager/releases/download/v1.1.0/cert-manager.yaml
+...
+$ scripts/pods.sh -n cert-manager
+NAME                                      NODE     IP
+cert-manager-cainjector-bd5f9c764-4sdfg   worker   10.42.1.5
+cert-manager-5597cff495-2f757             worker   10.42.1.7
+cert-manager-webhook-5f57f59fbc-hg7pn     worker   10.42.1.6
+```
+
+I'm not yet sure if cert-manager is so critical that it should be scheduled on
+the master node.

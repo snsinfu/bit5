@@ -1,0 +1,144 @@
+# DOCKER REGISTRY ------------------------------------------------------------
+
+- hosts: default
+  become: true
+
+  tasks:
+    - name: docker-registry is installed
+      apt:
+        name: docker-registry
+        state: present
+
+    - name: registry config is up
+      template:
+        src: docker-registry.config.yml
+        dest: /etc/docker/registry/config.yml
+      notify: restart registry
+
+    - name: registry is activated
+      service:
+        name: docker-registry
+        state: started
+        enabled: true
+
+    - name: registry hostname is registered
+      lineinfile:
+        path: /etc/hosts
+        line: "{{ internal_address }} registry"
+
+  handlers:
+    - name: restart registry
+      service:
+        name: docker-registry
+        state: restarted
+
+
+# DOCKER ---------------------------------------------------------------------
+
+- hosts: default
+  become: true
+
+  tasks:
+    - name: apt-key requirements are installed
+      apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - gnupg-agent
+        state: present
+
+    - name: apt key for docker repository is registered
+      apt_key:
+        id: 9dc858229fc7dd38854ae2d88d81803c0ebfcd88
+        url: https://download.docker.com/linux/debian/gpg
+        state: present
+
+    - name: docker repository is registered
+      apt_repository:
+        repo: >
+          deb [arch=amd64]
+          https://download.docker.com/linux/debian
+          {{ ansible_lsb.codename }} stable
+        state: present
+
+    - name: docker is installed
+      apt:
+        name: docker-ce
+        state: present
+
+    - name: docker insecure registry is configured
+      template:
+        src: docker-daemon.json
+        dest: /etc/docker/daemon.json
+      notify: restart docker
+
+    - name: vagrant user can use docker
+      user:
+        name: vagrant
+        groups: docker
+        append: true
+
+  handlers:
+    - name: restart docker
+      service:
+        name: docker
+        state: restarted
+
+
+# K3S ------------------------------------------------------------------------
+
+- hosts: default
+  become: true
+
+  vars:
+    k3s_version: "v1.20.0+k3s2"
+    k3s_installer_sum: "sha1:d302e35feaf9580cbc687c97119e377f81882823"
+
+  tasks:
+    - name: k3s install script is present
+      get_url:
+        url: https://github.com/k3s-io/k3s/raw/{{ k3s_version }}/install.sh
+        checksum: "{{ k3s_installer_sum }}"
+        dest: /root/k3s-install.sh
+        mode: 0744
+
+    - name: k3s config directory is present
+      file:
+        path: /etc/rancher/k3s
+        state: directory
+
+    - name: k3s server config is up
+      template:
+        src: k3s-config.yaml
+        dest: /etc/rancher/k3s/config.yaml
+      notify: restart k3s
+
+    - name: k3s registries config is up
+      template:
+        src: k3s-registries.yaml
+        dest: /etc/rancher/k3s/registries.yaml
+      notify: restart k3s
+
+    - name: k3s is installed
+      command: /root/k3s-install.sh
+      args:
+        creates: /usr/local/bin/k3s
+      environment:
+        INSTALL_K3S_VERSION: "{{ k3s_version }}"
+
+  handlers:
+    - name: restart k3s
+      service:
+        name: k3s
+        state: restarted
+
+
+# APP ------------------------------------------------------------------------
+- hosts: default
+  become: no
+
+  tasks:
+    - name: myapp code is up
+      copy:
+        src: myapp
+        dest: .

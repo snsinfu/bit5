@@ -1,0 +1,3 @@
+node-ip: "{{ external_address }}"
+node-external-ip: "{{ external_address }}"
+write-kubeconfig-mode: "644"

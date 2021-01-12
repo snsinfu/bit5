@@ -1,0 +1,13 @@
+images:
+  - name: registry:5000/myapp/web
+    build: ./web
+
+  - name: registry:5000/myapp/worker
+    build: ./worker
+
+kubernetes:
+  namespace: myapp
+  apply: ./manifests
+  restart:
+    - deployment/web
+    - deployment/worker

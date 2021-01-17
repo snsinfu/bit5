@@ -1,0 +1,8 @@
+images:
+  - name: registry:5000/myapp/web
+    build: .
+
+kubernetes:
+  namespace: myapp
+  apply: ./manifests
+  restart: deployment/web

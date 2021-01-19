@@ -1,0 +1,92 @@
+- hosts: default
+  become: true
+
+  vars:
+    postgresql_version: 12
+    postgresql_cluster: main
+    postgresql_datadir: /srv/postgresql
+    postgresql_password: 31ec858ae08561e13603d812226de02d
+
+  tasks:
+
+    - name: apt cache is up
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+
+    - name: ansible prerequisites are installed
+      apt:
+        name:
+          - gnupg-agent
+          - python3-pexpect
+          - python3-psycopg2
+        state: present
+
+    - name: postgresql apt signing key is added
+      apt_key:
+        url: https://www.postgresql.org/media/keys/ACCC4CF8.asc
+        state: present
+
+    - name: postgresql cluster manager is installed
+      apt:
+        name: postgresql-common
+        state: present
+
+    - name: postgres repository is added
+      apt_repository:
+        repo: deb http://apt.postgresql.org/pub/repos/apt/ {{ ansible_lsb.codename }}-pgdg main
+        state: present
+        filename: pgdg.list
+
+    - name: postgresql createcluster config directory is present
+      file:
+        path: /etc/postgresql-common/createcluster.d
+        state: directory
+
+    - name: postgresql default cluster creation is suppressed
+      copy:
+        content: |
+          create_main_cluster = false
+        dest: /etc/postgresql-common/createcluster.d/50-no_main_cluster.conf
+
+    - name: postgresql server is installed
+      apt:
+        name: postgresql-{{ postgresql_version }}
+        state: present
+
+    - name: postgresql cluster is created
+      expect:
+        command: >
+          pg_createcluster
+            --locale C.UTF-8
+            --port 5432
+            --start
+            --datadir {{ postgresql_datadir }}
+            {{ postgresql_version }}
+            {{ postgresql_cluster }}
+            --
+            --pwprompt
+        creates: "{{ postgresql_datadir }}/PG_VERSION"
+        responses:
+          "(password|again):": "{{ postgresql_password }}"
+
+    - name: postgresql cluster is accessible
+      postgresql_ping:
+        db: postgres
+        login_host: 127.0.0.1
+        login_user: postgres
+        login_password: "{{ postgresql_password }}"
+
+    - name: pgpass is created
+      copy:
+        content: "localhost:5432:*:postgres:{{ postgresql_password }}"
+        dest: .pgpass
+        mode: 0600
+      become: false
+
+    - name: create_user_db script is up
+      copy:
+        src: create_user_db.sh
+        dest: .
+        mode: 0755
+      become: false

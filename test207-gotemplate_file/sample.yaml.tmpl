@@ -1,0 +1,5 @@
+port: {{ .PORT }}
+names:
+  {{- range $name := split .NAMES "," }}
+    - {{ $name }}
+  {{- end }}

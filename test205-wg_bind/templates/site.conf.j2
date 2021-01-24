@@ -1,0 +1,5 @@
+server {
+    # Listen on the wireguard address.
+    listen {{ wg_address }}:80 default_server;
+    root /srv/site;
+}

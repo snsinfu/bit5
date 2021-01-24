@@ -1,0 +1,11 @@
+[Interface]
+PrivateKey = {{ wg_privkey }}
+ListenPort = {{ wg_port }}
+Address = {{ wg_cidr_address }}
+
+{% for name, host in hostvars.items() if name != inventory_hostname %}
+[Peer] # {{ name }}
+PublicKey = {{ host.wg_pubkey }}
+EndPoint = {{ host.external_address }}:{{ host.wg_port }}
+AllowedIPs = {{ host.wg_address }}/32
+{% endfor %}

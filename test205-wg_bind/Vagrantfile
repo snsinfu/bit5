@@ -1,0 +1,35 @@
+VM_BOX = "debian/buster64"
+VM_MEMORY = 1024
+VM_CPUS = 2
+
+SERVER_HOSTNAME = "server.nodes.internal"
+CLIENT_HOSTNAME = "client.nodes.internal"
+SERVER_IP = "172.29.1.10"
+CLIENT_IP = "172.29.1.11"
+PLAYBOOK = "provision.yml"
+
+
+Vagrant.configure("2") do |config|
+  config.vm.provider :virtualbox do |v|
+    v.memory = VM_MEMORY
+    v.cpus = VM_CPUS
+  end
+
+  config.vm.define :server do |server|
+    server.vm.box = VM_BOX
+    server.vm.hostname = SERVER_HOSTNAME
+    server.vm.network :private_network, ip: SERVER_IP
+    server.vm.provision :ansible do |ansible|
+      ansible.playbook = PLAYBOOK
+    end
+  end
+
+  config.vm.define :client do |client|
+    client.vm.box = VM_BOX
+    client.vm.hostname = CLIENT_HOSTNAME
+    client.vm.network :private_network, ip: CLIENT_IP
+    client.vm.provision :ansible do |ansible|
+      ansible.playbook = PLAYBOOK
+    end
+  end
+end

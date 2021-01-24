@@ -1,0 +1,57 @@
+- hosts: all
+  become: true
+  tasks:
+    - name: wireguard is set up
+      import_role:
+        name: wireguard
+
+
+- hosts: server
+  become: true
+  tasks:
+    - name: nginx is installed
+      apt:
+        name: nginx
+        state: present
+
+    - name: nginx default site is disabled
+      file:
+        path: /etc/nginx/sites-enabled/default
+        state: absent
+      notify: restart nginx
+
+    - name: nginx site directory is up
+      file:
+        path: /srv/site
+        state: directory
+        owner: www-data
+        group: www-data
+
+    - name: nginx site data is up
+      copy:
+        content: |
+          {{ hostvars | to_json }}
+        dest: /srv/site/sample.json
+        owner: www-data
+        group: www-data
+
+    - name: nginx test site config is up
+      template:
+        src: site.conf.j2
+        dest: /etc/nginx/sites-enabled/site.conf
+      notify: restart nginx
+
+  handlers:
+    - name: restart nginx
+      service:
+        name: nginx
+        state: restarted
+
+
+- hosts: client
+  become: true
+  tasks:
+    - name: http request against wireguard address works
+      get_url:
+        url: http://{{ hostvars['server'].wg_address }}/sample.json
+        dest: /tmp/sample.json

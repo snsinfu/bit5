@@ -1,0 +1,19 @@
+vars:
+  ansible_python_interpreter: python3
+
+  wg_port: 850
+  wg_network: 10.120.5.0/24
+  wg_address: "{{ wg_network | nthhost(wg_host_id) }}"
+  wg_cidr_address: "{{ wg_network | ipaddr(wg_host_id) }}"
+  wg_pubkey: "{{ wg_privkey | wg_derive_pubkey }}"
+
+host_vars:
+  server:
+    external_address: 172.29.1.10
+    wg_host_id: 10
+    wg_privkey: qF23i+l+OaLylFQdzjFeY1MVzy0npv6LeHgHJLhL0U4=
+
+  client:
+    external_address: 172.29.1.11
+    wg_host_id: 11
+    wg_privkey: WG0VCrZXmAMJfLhJV/E5tvpMb0uJONDbDD7+CjGO6lY=

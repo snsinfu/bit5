@@ -1,0 +1,49 @@
+- hosts: default
+  become: true
+
+  vars:
+    ansible_python_interpreter: python3
+    k3s_version: "v1.20.2+k3s1"
+    k3s_installer_sum: "sha1:9dd93925d6240efc19bf57b62b67b233c31fe9c7"
+
+  tasks:
+
+    - name: apt-key requirements are installed
+      apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - gnupg-agent
+        state: present
+
+    - name: backports repository is enabled
+      apt_repository:
+        repo: deb http://deb.debian.org/debian buster-backports main
+        state: present
+
+    - name: kubic apt key is registered
+      apt_key:
+        id: 2472d6d0d2f66af87aba8da34d64390375060aa4
+        url: https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/Debian_10/Release.key
+        state: present
+
+    - name: kubic repository is registered
+      apt_repository:
+        repo: deb https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/Debian_10/ /
+        state: present
+
+    - name: apt cache is up
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+
+    - name: libseccomp2 is installed
+      apt:
+        name: libseccomp2
+        state: present
+        default_release: buster-backports
+
+    - name: podman is installed
+      apt:
+        name: podman
+        state: present

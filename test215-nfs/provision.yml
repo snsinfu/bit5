@@ -1,0 +1,98 @@
+- hosts: server
+  become: true
+
+  tasks:
+    - name: nfs server is installed
+      apt:
+        name: nfs-kernel-server
+        state: present
+
+    - name: nfs shared directory exists
+      file:
+        path: /srv/nfs
+        state: directory
+        mode: "01777"
+
+    - name: nfs exports are configured
+      copy:
+        content: |
+          /srv/nfs *(rw,fsid=0,no_subtree_check)
+        dest: /etc/exports
+      notify: restart nfs server
+
+    #- name: nfsv4 idmapping is disabled
+    #  copy:
+    #    content: |
+    #      options nfsd nfs4_disable_idmapping=1
+    #    dest: /etc/modprobe.d/nfsd.conf
+
+    - name: nfs server is started
+      service:
+        name: nfs-server
+        state: started
+
+  handlers:
+    - name: restart nfs server
+      service:
+        name: nfs-server
+        state: restarted
+
+
+- hosts: client
+  become: true
+
+  tasks:
+    - name: nfs client tools are installed
+      apt:
+        name: nfs-common
+        state: present
+
+    #- name: nfsv4 idmapping is disabled
+    #  copy:
+    #    content: |
+    #      options nfs nfs4_disable_idmapping=1
+    #    dest: /etc/modprobe.d/nfs.conf
+    #  notify: remount nfs volume
+
+    - name: nfs volume is mounted
+      mount:
+        path: /mnt
+        src: "{{ nfs_server }}:/"
+        fstype: nfs
+        opts: rw,nfsvers=4
+        state: mounted
+
+    - name: test user group exists
+      group:
+        name: testuser
+        gid: 9999
+        state: present
+
+    - name: test user exists
+      user:
+        name: testuser
+        uid: 9999
+        group: testuser
+        state: present
+
+  handlers:
+    - name: remount nfs volume
+      mount:
+        path: /mnt
+        state: remounted
+
+
+- hosts: client
+
+  tasks:
+    - name: normal user may create a directory on the nfs volume
+      command: sudo -u testuser mkdir -p /mnt/foo
+      args:
+        warn: false
+
+    - name: normal user may write to the nfs volume
+      command: sudo -u testuser dd of=/mnt/foo/facts.txt
+      args:
+        stdin: |
+          {{ ansible_facts | to_yaml }}
+        warn: false

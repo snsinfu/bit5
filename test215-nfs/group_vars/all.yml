@@ -1,0 +1,2 @@
+ansible_python_interpreter: /usr/bin/python3
+nfs_server: 172.29.1.10

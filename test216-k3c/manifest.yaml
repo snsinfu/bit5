@@ -1,0 +1,21 @@
+---
+apiVersion: v1
+kind: Namespace
+
+metadata:
+  name: myapp
+
+
+---
+apiVersion: v1
+kind: Pod
+
+metadata:
+  namespace: myapp
+  name: main
+
+spec:
+  containers:
+    - name: main
+      image: localhost/myapp/main
+      imagePullPolicy: Never

@@ -1,0 +1,73 @@
+- hosts: default
+  become: true
+
+  vars:
+    ansible_python_interpreter: python3
+    k3s_version: "v1.20.2+k3s1"
+    k3s_installer_sum: "sha256:c63032985492e6fb3e7642b244a22ec7ad2f5a4f023a729de77b941dd19c6a59"
+    k3c_version: "v0.3.0-alpha.0"
+    k3c_sum: "sha256:33da645b5fdb2b52ba727add6e8dabfb6fcebce875b1e3bfe9f8b106ae8fcdf0"
+
+  tasks:
+
+    # K3S ------------------------------------------------------------------
+
+    - name: k3s install script is present
+      get_url:
+        url: https://github.com/k3s-io/k3s/raw/{{ k3s_version }}/install.sh
+        checksum: "{{ k3s_installer_sum }}"
+        dest: /root/k3s-install.sh
+        mode: 0744
+
+    - name: k3s config directory is present
+      file:
+        path: /etc/rancher/k3s
+        state: directory
+
+    - name: k3s server config is up
+      copy:
+        content: |
+          write-kubeconfig-mode: "644"
+        dest: /etc/rancher/k3s/config.yaml
+
+    - name: k3s is installed
+      command: /root/k3s-install.sh
+      args:
+        creates: /usr/local/bin/k3s
+      environment:
+        INSTALL_K3S_VERSION: "{{ k3s_version }}"
+
+
+    # K3C ------------------------------------------------------------------
+
+    - name: k3c cli is installed
+      get_url:
+        url: https://github.com/rancher/k3c/releases/download/{{ k3c_version }}/k3c-linux-amd64
+        checksum: "{{ k3c_sum }}"
+        dest: /usr/local/bin/k3c
+        mode: 0755
+
+    - name: k3c is deployed
+      shell: |
+        set -e
+        mkdir -p /var/lib/buildkit
+        k3c install --agent-image docker.io/rancher/k3c:{{ k3c_version | quote }}
+        touch /root/_k3c_deploy.ok
+      args:
+        creates: /root/_k3c_deploy.ok
+
+
+- hosts: default
+  become: false
+
+  tasks:
+
+    - name: Dockerfile is up
+      copy:
+        src: Dockerfile
+        dest: .
+
+    - name: manifest is up
+      copy:
+        src: manifest.yaml
+        dest: .

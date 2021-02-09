@@ -1,0 +1,8 @@
+- hosts: all
+
+  tasks:
+    - copy:
+        content: |
+          Address: {{ private_address }}
+          Datadir: {{ postgres_datadir }}
+        dest: _output_{{ inventory_hostname }}.txt

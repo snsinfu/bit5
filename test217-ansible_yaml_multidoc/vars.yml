@@ -1,0 +1,17 @@
+# Multi-document YAML.
+
+--- # Private network
+vars:
+  private_network: 10.12.34.0/24
+  private_address: "{{ private_network | nthhost(private_host_id) }}"
+
+host_vars:
+  javelin:
+    private_host_id: 10
+  jupiter:
+    private_host_id: 11
+
+--- # Postgres
+vars:
+  postgres_version: 13
+  postgres_datadir: /data/postgres-{{ postgres_version }}

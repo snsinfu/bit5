@@ -1,0 +1,13 @@
+- hosts: localhost
+  connection: local
+
+  vars_files:
+    - vars.yml
+
+  tasks:
+
+    # https://github.com/ansible/ansible/issues/10031
+    - debug:
+        msg: |
+          #jinja2: variable_start_string: "${{"
+          ${{ foobar }}

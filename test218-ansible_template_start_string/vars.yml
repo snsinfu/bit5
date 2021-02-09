@@ -1,0 +1,8 @@
+#jinja2: variable_start_string: "${{"
+# This does not work. You will see dollar signs in the `foobar` variable.
+# Templating works after parsing YAML, so the jinja2 line needs to be placed
+# inside the YAML string node.
+
+foo: abc
+bar: 123
+foobar: ${{ foo }}-${{ bar }}

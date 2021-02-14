@@ -1,0 +1,22 @@
+vars:
+  common:
+    wireguard_network: 10.5.5.0/24
+    wireguard_address: "{{ wireguard_network | nthhost(wireguard_host_id) }}"
+
+  hosts:
+    javelin:
+      wireguard_host_id: 10
+    jupiter:
+      wireguard_host_id: 11
+    juno:
+      wireguard_host_id: 12
+    dev1:
+      wireguard_host_id: 200
+    dev2:
+      wireguard_host_id: 201
+    dev3:
+      wireguard_host_id: 202
+
+  groups:
+    servers:
+      wireguard_interface: wg0

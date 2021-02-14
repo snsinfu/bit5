@@ -1,0 +1,5 @@
+plugin: overrides
+
+overrides:
+  - vars/hosts.yml
+  - vars/vars.yml

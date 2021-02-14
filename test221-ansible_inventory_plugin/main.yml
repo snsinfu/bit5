@@ -1,0 +1,11 @@
+- hosts: localhost
+  connection: local
+
+  tasks:
+    - name: Groups
+      debug:
+        var: groups
+
+    - name: Variables
+      debug:
+        var: hostvars

@@ -1,0 +1,14 @@
+vars:
+  common:
+    wireguard_network: 10.20.30.0/24
+    wireguard_address: "{{ wireguard_network | nthhost(wireguard_host_id) }}"
+
+  host:
+    ardent:
+      wireguard_host_id: 10
+    beagle:
+      wireguard_host_id: 11
+    cygnet:
+      wireguard_host_id: 12
+    dev1:
+      wireguard_host_id: 200

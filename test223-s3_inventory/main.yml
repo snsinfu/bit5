@@ -1,0 +1,16 @@
+- hosts: localhost
+  connection: local
+
+  tasks:
+    - name: Dump host variables
+      copy:
+        content: "{{ hostvars | to_yaml }}"
+        dest: _vars.yml
+
+    - name: Define wireguard hosts
+      stanza:
+        path: _hosts
+        content: |
+          {% for hostname, host in hostvars.items() %}
+            {{- host.wireguard_address }} {{ hostname }}.internal
+          {% endfor %}

@@ -1,0 +1,7 @@
+plugin: s3
+
+overrides:
+  - key: test/hosts.yml
+  - key: test/wireguard.yml
+  - key: test/host_access.yml
+    optional: true

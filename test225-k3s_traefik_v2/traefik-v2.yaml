@@ -1,0 +1,42 @@
+# Taken from the Traefik v2 integration PR [1][2]. K3s splits the CRD parts to
+# a chart called traefik-crd [3] but the upstream integrates everything
+# together in a single chart. We use the latter, so we do not have traefik-crd
+# here.
+#
+# [1]: https://github.com/k3s-io/k3s/pull/2910
+# [2]: https://github.com/k3s-io/k3s/raw/ae0920e9bbfaad795012ed113f9e934b4dadaf1c/manifests/traefik.yaml
+# [3]: https://github.com/k3s-io/k3s/blob/ae0920e9bbfaad795012ed113f9e934b4dadaf1c/scripts/download
+
+apiVersion: helm.cattle.io/v1
+kind: HelmChart
+metadata:
+  name: traefik
+  namespace: kube-system
+spec:
+  chart: https://helm.traefik.io/traefik/traefik-9.14.2.tgz
+  valuesContent: |-
+    rbac:
+      enabled: true
+    ports:
+      websecure:
+        tls:
+          enabled: true
+    podAnnotations:
+      prometheus.io/port: "8082"
+      prometheus.io/scrape: "true"
+    providers:
+      kubernetesIngress:
+        publishedService:
+          enabled: true
+    priorityClassName: "system-cluster-critical"
+    image:
+      name: "rancher/library-traefik"
+    tolerations:
+    - key: "CriticalAddonsOnly"
+      operator: "Exists"
+    - key: "node-role.kubernetes.io/control-plane"
+      operator: "Exists"
+      effect: "NoSchedule"
+    - key: "node-role.kubernetes.io/master"
+      operator: "Exists"
+      effect: "NoSchedule"

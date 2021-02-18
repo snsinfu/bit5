@@ -1,0 +1,55 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: myapp
+  labels: &labels
+    app: myapp
+
+spec:
+  replicas: 1
+  selector:
+    matchLabels: *labels
+  template:
+    metadata:
+      labels: *labels
+    spec:
+      containers:
+        - name: whoami
+          image: containous/whoami
+          ports:
+            - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+
+metadata:
+  name: myapp
+
+spec:
+  ports:
+    - port: 80
+  selector:
+    app: myapp
+
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+
+metadata:
+  name: myapp
+
+spec:
+  entryPoints:
+    - web
+    - websecure
+  routes:
+    - kind: Rule
+      match: Host(`myapp.example.com`)
+      services:
+        - name: myapp
+          port: 80    # NB: This is necessary.
+  tls:
+    certResolver: le-test

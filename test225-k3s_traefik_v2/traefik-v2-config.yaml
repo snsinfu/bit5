@@ -11,6 +11,8 @@ spec:
       - --certificatesresolvers.le-test.acme.email=snsinfu+LE@gmail.com
       - --certificatesresolvers.le-test.acme.storage=/data/acme.json
       - --certificatesresolvers.le-test.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory
+      - --certificatesresolvers.le-test.acme.httpchallenge=true
+      - --certificatesresolvers.le-test.acme.httpchallenge.entryPoint=web
     persistence:
       enabled: true
       path: /data

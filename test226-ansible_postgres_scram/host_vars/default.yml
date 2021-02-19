@@ -1,0 +1,9 @@
+ansible_python_interpreter: python3
+
+postgresql_version: 13
+postgresql_cluster: main
+postgresql_datadir: /srv/postgresql
+postgresql_password: 630660759e950035a603e1af12656659
+postgresql_admin_users:
+  - name: vagrant
+    password: 775b5962bb557f05ac29184368ab8861

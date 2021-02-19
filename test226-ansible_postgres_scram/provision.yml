@@ -1,0 +1,130 @@
+- hosts: default
+  become: true
+
+  tasks:
+    - name: apt cache is up
+      apt:
+        update_cache: yes
+        cache_valid_time: 86400
+
+    - name: ansible prerequisites are installed
+      apt:
+        name:
+          - gnupg
+          - python3-pexpect
+          - python3-psycopg2
+        state: present
+
+    - name: postgresql apt signing key is added
+      apt_key:
+        url: https://www.postgresql.org/media/keys/ACCC4CF8.asc
+        state: present
+
+    - name: postgresql cluster manager is installed
+      apt:
+        name: postgresql-common
+        state: present
+
+    - name: postgres repository is added
+      apt_repository:
+        repo: deb http://apt.postgresql.org/pub/repos/apt/ {{ ansible_lsb.codename }}-pgdg main
+        state: present
+        filename: pgdg.list
+
+    - name: postgresql createcluster config directory is present
+      file:
+        path: /etc/postgresql-common/createcluster.d
+        state: directory
+
+    - name: postgresql default cluster creation is suppressed
+      copy:
+        content: |
+          create_main_cluster = false
+        dest: /etc/postgresql-common/createcluster.d/50-no_main_cluster.conf
+
+    - name: postgresql server is installed
+      apt:
+        name: postgresql-{{ postgresql_version }}
+        state: present
+
+    - name: postgresql cluster is created
+      expect:
+        command: >
+          pg_createcluster
+            --locale C.UTF-8
+            --port 5432
+            --datadir {{ postgresql_datadir }}
+            {{ postgresql_version }}
+            {{ postgresql_cluster }}
+            --
+            --auth scram-sha-256
+            --pwprompt
+        creates: "{{ postgresql_datadir }}/PG_VERSION"
+        responses:
+          "(password|again):": "{{ postgresql_password }}"
+
+    - name: postgresql connection config is up
+      template:
+        src: postgresql-connection.conf.j2
+        dest: /etc/postgresql/{{ postgresql_version }}/{{ postgresql_cluster }}/conf.d/connection.conf
+        owner: postgres
+        group: postgres
+        mode: "644"
+      notify: restart postgresql
+
+    - name: postgresql access config is up
+      template:
+        src: postgresql-hba.conf.j2
+        dest: /etc/postgresql/{{ postgresql_version }}/{{ postgresql_cluster }}/pg_hba.conf
+        owner: postgres
+        group: postgres
+        mode: "640"
+      notify: restart postgresql
+
+    - name: postgresql service is activated
+      service:
+        name: postgresql@{{ postgresql_version }}-{{ postgresql_cluster }}
+        state: started
+        enabled: true
+
+    - name: postgresql cluster is accessible
+      postgresql_ping:
+        db: postgres
+        login_password: "{{ postgresql_password }}"
+
+    - name: postgresql admin users are added
+      postgresql_user:
+        name: "{{ item.name }}"
+        password: "{{ item.password }}"
+        role_attr_flags: CREATEDB,CREATEROLE
+        state: present
+        login_password: "{{ postgresql_password }}"
+      environment:
+        PGOPTIONS: "-c password_encryption=scram-sha-256"
+      with_items: "{{ postgresql_admin_users }}"
+
+  handlers:
+    - name: restart postgresql
+      service:
+        name: postgresql@{{ postgresql_version }}-{{ postgresql_cluster }}
+        state: restarted
+
+
+- hosts: default
+  become: false
+
+  tasks:
+    - name: pgpass is generated
+      copy:
+        content: |
+          {% for admin in postgresql_admin_users %}
+          localhost:5432:*:{{ admin.name }}:{{ admin.password }}
+          {% endfor %}
+        dest: .pgpass
+        mode: "600"
+
+    - name: mkdatabase script is up
+      copy:
+        src: mkdatabase.sh
+        dest: .
+        mode: "755"

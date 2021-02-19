@@ -1,0 +1,13 @@
+# TYPE  DATABASE    USER        ADDRESS         METHOD
+
+# Superuser
+local   all         postgres                    scram-sha-256
+
+# Local admins
+{% for admin in postgresql_admin_users %}
+local   all         {{ admin.name }}            scram-sha-256
+{% endfor %}
+
+# Database owners
+local   sameuser    all                         scram-sha-256
+host    sameuser    all         0.0.0.0/0       scram-sha-256

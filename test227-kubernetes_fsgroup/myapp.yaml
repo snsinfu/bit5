@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: myapp
+  labels: &labels
+    app: myapp
+
+spec:
+  replicas: 1
+
+  selector:
+    matchLabels: *labels
+
+  template:
+    metadata:
+      labels: *labels
+
+    spec:
+      # FIXME: This does not change the owner of the files in the nfs share...
+      securityContext:
+        runAsUser: 1234
+        runAsGroup: 5678
+        fsGroup: 5678
+
+      containers:
+        - name: main
+          image: busybox
+          command: ["sleep", "infinity"]
+          volumeMounts:
+            - name: storage
+              mountPath: /data
+
+      volumes:
+        - name: storage
+          nfs:
+            server: "{{ ansible_default_ipv4.address }}"
+            path: /myapp

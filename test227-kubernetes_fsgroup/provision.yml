@@ -1,0 +1,89 @@
+- hosts: default
+  become: true
+
+  vars:
+    ansible_python_interpreter: python3
+    k3s_version: "v1.20.2+k3s1"
+    k3s_installer_sum: "sha256:c63032985492e6fb3e7642b244a22ec7ad2f5a4f023a729de77b941dd19c6a59"
+
+  tasks:
+
+    # NFS ------------------------------------------------------------------
+
+    - name: nfs server is installed
+      apt:
+        name: nfs-kernel-server
+        state: present
+
+    - name: nfsv4 idmapping is disabled
+      copy:
+        content: |
+          options nfsd nfs4_disable_idmapping=Y
+        dest: /etc/modprobe.d/nfsd.conf
+      notify: restart nfs server
+
+    - name: nfs shared directory exists
+      file:
+        path: /srv/nfs
+        state: directory
+        mode: "1777"
+
+    - name: nfs volume is exported
+      copy:
+        content: |
+          /srv/nfs *(rw,fsid=0,no_subtree_check)
+        dest: /etc/exports
+      notify: restart nfs server
+
+    - name: nfs server is started
+      service:
+        name: nfs-server
+        state: started
+
+    # K3S ------------------------------------------------------------------
+
+    - name: k3s install script is present
+      get_url:
+        url: https://github.com/k3s-io/k3s/raw/{{ k3s_version }}/install.sh
+        checksum: "{{ k3s_installer_sum }}"
+        dest: /root/k3s-install.sh
+        mode: "744"
+
+    - name: k3s config directory is present
+      file:
+        path: /etc/rancher/k3s
+        state: directory
+
+    - name: k3s server config is up
+      copy:
+        content: |
+          write-kubeconfig-mode: "644"
+        dest: /etc/rancher/k3s/config.yaml
+
+    - name: k3s is installed
+      command: /root/k3s-install.sh
+      args:
+        creates: /usr/local/bin/k3s
+      environment:
+        INSTALL_K3S_VERSION: "{{ k3s_version }}"
+
+  handlers:
+    - name: restart nfs server
+      service:
+        name: nfs-server
+        state: restarted
+
+
+- hosts: default
+  become: false
+
+  tasks:
+    - name: myapp volume exists
+      file:
+        path: /srv/nfs/myapp
+        state: directory
+
+    - name: myapp manifest is up
+      template:
+        src: myapp.yaml
+        dest: .

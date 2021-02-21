@@ -20,7 +20,14 @@ spec:
       containers:
         - name: main
           image: busybox
-          command: ["sleep", "infinity"]
+          command:
+            - "/bin/sh"
+            - "-c"
+            - |
+              while :; do
+                date > /data/now.txt
+                sleep 5
+              done
           volumeMounts: &mounts
             - name: storage
               mountPath: /data

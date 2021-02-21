@@ -17,19 +17,24 @@ spec:
       labels: *labels
 
     spec:
-      # FIXME: This does not change the owner of the files in the nfs share...
-      securityContext:
-        runAsUser: 1234
-        runAsGroup: 5678
-        fsGroup: 5678
-
       containers:
         - name: main
           image: busybox
           command: ["sleep", "infinity"]
-          volumeMounts:
+          volumeMounts: &mounts
             - name: storage
               mountPath: /data
+          securityContext:
+            runAsUser: 1234
+            runAsGroup: 5678
+
+      initContainers:
+        # fsGroup does not work for NFS volumes. So we use an init container to
+        # fixup the owner of the volume.
+        - name: chown
+          image: busybox
+          command: ["chown", "-R", "1234:5678", "/data"]
+          volumeMounts: *mounts
 
       volumes:
         - name: storage

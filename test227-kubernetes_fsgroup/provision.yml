@@ -31,7 +31,7 @@
     - name: nfs volume is exported
       copy:
         content: |
-          /srv/nfs *(rw,fsid=0,no_subtree_check)
+          /srv/nfs *(rw,fsid=0,no_subtree_check,no_root_squash)
         dest: /etc/exports
       notify: restart nfs server
 

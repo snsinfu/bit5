@@ -1,0 +1,21 @@
+version: "3.8"
+
+services:
+  main:
+    build: .
+    environment:
+      PGHOST: postgres
+      PGUSER: main
+      PGPASSWORD: "08545f8a8cee898f"
+      PGDATABASE: main
+    depends_on:
+      - postgres
+    restart: on-failure
+
+  postgres:
+    image: postgres:13.2
+    environment:
+      POSTGRES_USER: main
+      POSTGRES_PASSWORD: "08545f8a8cee898f"
+      POSTGRES_DATABASE: main
+    restart: on-failure

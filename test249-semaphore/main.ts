@@ -7,10 +7,11 @@ function sleep(delay: number): Promise<void> {
 }
 
 const sem = new IntervalSemaphore(2);
+const start = Date.now();
 
 for (let i = 0; i < 5; i++) {
   await sem.acquire();
-  console.log(Date.now());
+  console.log(Date.now() - start);
 }
 
 console.log("---")
@@ -19,5 +20,5 @@ console.log("---")
 
 for (let i = 0; i < 5; i++) {
   await sem.acquire();
-  console.log(Date.now());
+  console.log(Date.now() - start);
 }

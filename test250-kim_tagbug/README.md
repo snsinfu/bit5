@@ -121,3 +121,5 @@ kim build -t "${image}:${version}" -t "${image}:latest" .
 and garbage-collect non-latest images from a cron job. Used images won't be
 removed (it's rejected as an error), so it would be okay to just remove (or
 attempt to remove) all non-latest images periodically.
+
+Tested [prune.sh](prune.sh) in the box and it seems to be working.

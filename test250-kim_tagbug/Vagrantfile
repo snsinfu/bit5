@@ -1,0 +1,12 @@
+VM_BOX = "debian/buster64"
+VM_CPUS = 2
+VM_MEMORY = 1024
+
+Vagrant.configure("2") do |config|
+  config.vm.box = VM_BOX
+  config.vm.provider :virtualbox do |v|
+    v.cpus = VM_CPUS
+    v.memory = VM_MEMORY
+  end
+  config.vm.provision :shell, path: "provision.sh"
+end

@@ -78,3 +78,46 @@ localhost/whoami/web             latest              42e9ee99555c9       2.58MB
 ```
 
 So, a workaround to the issue is to tag each image with a unique name.
+
+
+## Build latest image and delete old ones
+
+The following script would do:
+
+```sh
+image="localhost/whoami/web"
+version="$(date +"%Y%m%d.%H%M%S")"
+
+kim build -t "${image}:${version}" -t "${image}:latest" .
+
+# Identify the ID of the latest image.
+latest_id=$(
+  kim image ls |
+  awk -v image="${image}" '$1 == image && $2 == "latest" { print $3 }'
+)
+
+# Delete old images.
+kim image ls |
+awk -v image="${image}" -v latest_id="${latest_id}" '$1 == image && $3 != latest_id { print $3 }' |
+sort -u |
+xargs -rL1 kim image rm
+```
+
+[Filtering does not work currently][filterbug], so I need to parse the table
+and select the target images.
+
+[filterbug]: https://github.com/rancher/kim/blob/v0.1.0-alpha.3/pkg/client/image/list.go#L29
+
+It's cumbersome to repeat this workaround in the deployment script of every
+image. Maybe just build an image with a unique tag plus the latest tag:
+
+```sh
+# Deployment script.
+image="localhost/whoami/web"
+version="$(date +"%Y%m%d.%H%M%S")"
+kim build -t "${image}:${version}" -t "${image}:latest" .
+```
+
+and garbage-collect non-latest images from a cron job. Used images won't be
+removed (it's rejected as an error), so it would be okay to just remove (or
+attempt to remove) all non-latest images periodically.

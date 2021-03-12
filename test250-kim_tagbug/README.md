@@ -41,6 +41,40 @@ localhost/whoami/web             latest              11cb9ad2dda58       2.58MB
 ```
 
 The new image (11cb9ad2dda58) is correctly named and tagged. However, the old
-one image (813616d2279bb) persists with the strange name. It's untagged and
+image (813616d2279bb) persists with the strange name. It's untagged and
 named as "localhost/whoami/web:latest" (this is the name without a tag!). Looks
 a bug to me.
+
+
+## Additional tag
+
+The strange image name does not appear if I attach additional unique tag to
+each image.
+
+```console
+$ date > date.txt
+$ kim build -t localhost/whoami/web:latest -t localhost/whoami/web:$(date +%s) .
+$ date > date.txt
+$ kim build -t localhost/whoami/web:latest -t localhost/whoami/web:$(date +%s) .
+$ kim ls
+IMAGE                            TAG                 IMAGE ID            SIZE
+...
+localhost/whoami/web             1615571731          0395cbd1606c2       2.58MB
+localhost/whoami/web             1615571791          42e9ee99555c9       2.58MB
+localhost/whoami/web             latest              42e9ee99555c9       2.58MB
+```
+
+The first one is the old image, second is the new image and the third is the
+alternate name of the second image. Removing the old one by tag actually
+removes the image.
+
+```console
+$ kim image rm localhost/whoami/web:1615571731
+$ kim image ls
+IMAGE                            TAG                 IMAGE ID            SIZE
+...
+localhost/whoami/web             1615571791          42e9ee99555c9       2.58MB
+localhost/whoami/web             latest              42e9ee99555c9       2.58MB
+```
+
+So, a workaround to the issue is to tag each image with a unique name.

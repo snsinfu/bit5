@@ -12,3 +12,5 @@ Deno.test("case 2", () => {
   state++;
   assertEquals(state, 1); // No. This fails.
 });
+
+// See: https://github.com/denoland/deno/issues/4366

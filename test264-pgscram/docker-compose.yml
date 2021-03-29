@@ -1,0 +1,14 @@
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres:13
+    environment:
+      POSTGRES_DATABASE: main
+      POSTGRES_USER: main
+      POSTGRES_PASSWORD: "28c9134e609f91e304307b569320a1f4"
+      POSTGRES_HOST_AUTH_METHOD: scram-sha-256
+    ports:
+      - target: 5432
+        published: 5432
+    restart: on-failure

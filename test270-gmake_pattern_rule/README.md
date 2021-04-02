@@ -27,7 +27,8 @@ message. Gmake actually considers the rule, but the fact that the matching
 prerequisite does not exist makes gmake think that the rule is not applicable...
 
 <details>
-  <summary>Debug messages</summary>
+<summary>Debug messages</summary>
+
 ```console
 $ make -d hash-ccc-1.txt
 
@@ -64,4 +65,5 @@ Considering target file `hash-ccc-1.txt'.
  Finished prerequisites of target file `hash-ccc-1.txt'.
 Must remake target `hash-ccc-1.txt'.
 ```
+
 </details>

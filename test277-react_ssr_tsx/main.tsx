@@ -1,8 +1,12 @@
+// Can't import from Skypack.
+// import React from "https://cdn.skypack.dev/react@17.0.2?dts";
+// import ReactDOMServer from "https://cdn.skypack.dev/react-dom@17.0.2/server?dts";
 // error: Uncaught ReferenceError: process is not defined
 // https://github.com/skypackjs/skypack-cdn/issues/127
 
-import React from "https://cdn.skypack.dev/react@17.0.2?dts";
-import ReactDOMServer from "https://cdn.skypack.dev/react-dom@17.0.2/server?dts";
+// esm works.
+import React from "https://esm.sh/react@17.0.2";
+import ReactDOMServer from "https://esm.sh/react-dom@17.0.2/server";
 
 interface AppProps {
   title: string;

@@ -32,20 +32,20 @@ fn main() {
     }
 }
 
-fn check_sat(formula: &Formula, mut vars: &mut Vec::<bool>) -> bool {
-    // Stop conditions
-    if eval_formula(&formula, &mut vars) {
+fn check_sat(given_formula: &Formula, mut vars: &mut Vec::<bool>) -> bool {
+    let mut formula = given_formula.clone();
+
+    unit_prop(&mut formula, &mut vars);
+
+    if formula.is_empty() {
         return true;
     }
 
-    for clause in formula {
+    for clause in formula.iter() {
         if clause.is_empty() {
             return false;
         }
     }
-
-    // TODO: Unit propagation
-    // TODO: Pure literal elimination
 
     // Splitting
     let i = match &formula[0][0] {
@@ -53,17 +53,47 @@ fn check_sat(formula: &Formula, mut vars: &mut Vec::<bool>) -> bool {
         &Not(i) => i,
     };
 
-    vars[i] = true;
-    if check_sat(&assign(formula, i, true), &mut vars) {
+    formula.push(vec![Var(i)]);
+    if check_sat(&formula, &mut vars) {
         return true;
     }
 
-    vars[i] = false;
-    if check_sat(&assign(formula, i, false), &mut vars) {
+    formula.pop();
+    formula.push(vec![Not(i)]);
+    if check_sat(&formula, &mut vars) {
         return true;
     }
 
     return false;
+}
+
+fn unit_prop(formula: &mut Formula, vars: &mut Vec::<bool>) {
+    while !formula.is_empty() {
+        let mut unit_clause: Option::<Literal> = None;
+
+        for (i, clause) in formula.iter().enumerate() {
+            if clause.len() == 1 {
+                unit_clause = Some(clause[0]);
+                formula.remove(i);
+                break;
+            }
+        }
+
+        if let Some(lit) = unit_clause {
+            *formula = match lit {
+                Var(i) => {
+                    vars[i] = true;
+                    assign(&formula, i, true)
+                },
+                Not(i) => {
+                    vars[i] = false;
+                    assign(&formula, i, false)
+                },
+            }
+        } else {
+            break;
+        }
+    }
 }
 
 fn assign(formula: &Formula, var: usize, value: bool) -> Formula {
@@ -92,26 +122,4 @@ fn assign(formula: &Formula, var: usize, value: bool) -> Formula {
     }
 
     return new_formula;
-}
-
-fn eval_formula(formula: &Formula, vars: &Vec::<bool>) -> bool {
-    for clause in formula {
-        if !eval_clause(&clause, &vars) {
-            return false;
-        }
-    }
-    return true;
-}
-
-fn eval_clause(clause: &Clause, vars: &Vec::<bool>) -> bool {
-    for lit in clause {
-        let cond = match lit {
-            &Var(i) => vars[i],
-            &Not(i) => !vars[i],
-        };
-        if cond {
-            return true;
-        }
-    }
-    return false;
 }

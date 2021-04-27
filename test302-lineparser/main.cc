@@ -1,5 +1,6 @@
 #include <cstddef>
 #include <iostream>
+#include <optional>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -20,6 +21,40 @@ public:
     {
     }
 
+    std::optional<std::string_view> consume()
+    {
+        if (!ensure()) {
+            return std::nullopt;
+        }
+        _consumed = true;
+        return _line;
+    }
+
+    std::optional<std::string_view> peek()
+    {
+        if (!ensure()) {
+            return std::nullopt;
+        }
+        return _line;
+    }
+
+    std::size_t line_number() const noexcept
+    {
+        return _line_number;
+    }
+
+private:
+    bool ensure()
+    {
+        if (_consumed) {
+            if (!read()) {
+                return false;
+            }
+            _consumed = false;
+        }
+        return true;
+    }
+
     bool read()
     {
         if (!std::getline(_input, _line)) {
@@ -32,20 +67,11 @@ public:
         return true;
     }
 
-    std::string_view line() const noexcept
-    {
-        return _line;
-    }
-
-    std::size_t line_number() const noexcept
-    {
-        return _line_number;
-    }
-
 private:
     std::istream& _input;
     std::string _line;
     std::size_t _line_number = 0;
+    bool _consumed = true;
 };
 
 int main()
@@ -62,21 +88,37 @@ int main()
     };
     line_reader lines{input};
 
-    [&] {
-        while (lines.read()) {
+    for (;;) {
+        // Skip comment and empty lines.
+        for (;;) {
+            std::string_view line;
 
-            // Skip comment and empty lines. Ugly. Design issues?
-            while (lines.line().empty() || lines.line().front() == '#') {
-                if (!lines.read()) {
-                    return;
-                }
+            if (auto maybe_line = lines.peek()) {
+                line = *maybe_line;
+            } else {
+                break;
             }
 
-            std::cout
-                << lines.line_number()
-                << " | "
-                << lines.line()
-                << '\n';
+            if (line.empty() || line.front() == '#') {
+                lines.consume();
+                continue;
+            }
+            break;
         }
-    }();
+
+        // Print non-comment line.
+        std::string_view line;
+
+        if (auto maybe_line = lines.consume()) {
+            line = *maybe_line;
+        } else {
+            break;
+        }
+
+        std::cout
+            << lines.line_number()
+            << " | "
+            << line
+            << '\n';
+    }
 }

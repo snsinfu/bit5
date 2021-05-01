@@ -5,33 +5,34 @@ class splitter
 {
 public:
     explicit splitter(std::string_view text)
-        : _start{text.data()}
-        , _text_end{text.data() + text.size()}
-        , _prev_end{text.data()}
+        : _text{text}, _prev_end{text.begin()}
     {
     }
 
     bool is_empty() const
     {
-        return _prev_end == _text_end;
+        return _prev_end == _text.end();
     }
 
     std::string_view split(char delim)
     {
-        char const* end = _start;
-        while (end != _text_end && *end != delim) {
-            ++end;
+        auto const delim_pos = _text.find(delim);
+        auto token_end = delim_pos;
+        auto next_start = delim_pos + 1;
+        if (delim_pos == std::string_view::npos) {
+            token_end = _text.size();
+            next_start = _text.size();
         }
-        std::string_view const token{_start, std::size_t(end - _start)};
-        _prev_end = end;
-        _start = (end == _text_end) ? end : end + 1;
+
+        auto const token = _text.substr(0, token_end);
+        _text = _text.substr(next_start);
+        _prev_end = token.end();
         return token;
     }
 
 private:
-    char const* _start;
-    char const* _text_end;
-    char const* _prev_end;
+    std::string_view _text;
+    std::string_view::iterator _prev_end;
 };
 
 int main()

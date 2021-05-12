@@ -13,17 +13,15 @@ export function csrfGuard(): oak.Middleware {
     const realToken = cookies.get(COOKIE_KEY);
     const clientToken = request.headers.get(HEADER_KEY);
     let newToken = realToken;
+    const sameOrigin = checkSameOrigin(request);
 
     if (!SAFE_METHODS.includes(method)) {
-      const referrer = request.headers.get("referer");
-
-      if (!referrer || !verifyOrigin(request.url, new URL(referrer))) {
+      if (!sameOrigin) {
         response.status = 403;
         return;
       }
 
       if (!realToken || !clientToken || !verifyToken(realToken, clientToken)) {
-        console.log("@token", realToken, clientToken);
         response.status = 400;
         return;
       }
@@ -34,11 +32,23 @@ export function csrfGuard(): oak.Middleware {
     if (!newToken) {
       newToken = generateToken(TOKEN_SIZE);
     }
-    cookies.set(COOKIE_KEY, newToken, { sameSite: "strict", maxAge: TOKEN_AGE });
-    response.headers.set(HEADER_KEY, newToken);
+
+    // Do not leak token to other sites.
+    if (sameOrigin) {
+      cookies.set(COOKIE_KEY, newToken, { sameSite: "strict", maxAge: TOKEN_AGE });
+      response.headers.set(HEADER_KEY, newToken);
+    }
 
     await next();
   };
+}
+
+function checkSameOrigin(request: oak.Request): boolean {
+  const referrer = request.headers.get("referer");
+  if (!referrer) {
+    return false;
+  }
+  return verifyOrigin(request.url, new URL(referrer));
 }
 
 function verifyOrigin(page: URL, referrer: URL): boolean {

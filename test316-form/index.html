@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <meta http-equiv="content-security-policy" content="default-src 'none'; style-src 'self'; script-src 'self'" />
+    <title>Form</title>
+    <link rel="stylesheet" href="index.css" />
+    <script src="index.js"></script>
+  </head>
+
+  <body>
+    <h1>Form</h1>
+
+    <!-- A form that meant to be intercepted by JS -->
+    <form method="post" action="./login" id="login">
+      <label><span>Username</span><input type="text" name="username" /></label>
+      <label><span>Password</span><input type="password" name="password" /></label>
+      <input type="submit" value="Login" />
+    </form>
+
+    <p id="status"></p>
+  </body>
+</html>

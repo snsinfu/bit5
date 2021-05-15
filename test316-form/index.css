@@ -1,0 +1,101 @@
+* {
+  box-sizing: border-box;
+}
+
+html {
+  margin: 0;
+  padding: 0;
+  font-family: sans-serif;
+  font-size: 12pt;
+}
+
+body {
+  margin: 1em;
+}
+
+h1 {
+  font-size: 3ex;
+  font-weight: bold;
+  line-height: 1;
+  margin: 1em 0;
+}
+
+input {
+  display: inline-block;
+  font-size: 100%;
+  border: 1px solid black;
+  border-radius: 3px;
+  line-height: 1;
+  padding: 7px;
+}
+
+input[type="submit"] {
+  font-size: 100%;
+}
+
+#login {
+  display: flex;
+  flex-direction: column;
+  margin: 1em auto;
+  padding: 1em;
+  max-width: 400px;
+  align-items: center;
+  background-color: #eee;
+  border: 2px solid #aaa;
+}
+
+#login > label, #login > input {
+  margin: 0.5ex;
+}
+
+#login label {
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  vertical-align: center;
+}
+
+#login label > span {
+  flex: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#login label > input {
+  width: 260px;
+  display: inline-block;
+}
+
+#login input[type="submit"] {
+  width: 200px;
+  display: block;
+  margin-top: 2ex;
+}
+
+#login input[type="submit"]:enabled {
+  cursor: pointer;
+  color: #fff;
+  text-shadow: 1px 1px 0 #338;
+  background-color: #88e;
+  border-color: #eef #66a #66a #eef;
+}
+
+#login input[type="submit"]:active {
+  border-color: #66a #eef #eef #66a;
+}
+
+#login input[type="submit"]:disabled {
+  cursor: wait;
+  color: #ccc;
+  text-shadow: 1px 1px 0 #333;
+  background-color: #888;
+}
+
+#status {
+  margin: 1em auto;
+  max-width: 600px;
+  padding: 1ex;
+  text-align: center;
+  background-color: #eee;
+}

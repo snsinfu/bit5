@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>Flex</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      html, body {
+        margin: 0;
+        padding: 0;
+      }
+      #ui {
+        min-height: 400px;
+        height: 100vh;
+        display: flex;
+        flex-direction: row;
+        background-color: #ccc;
+      }
+      #list {
+        width: 200px;
+        height: 100%;
+        flex: none;
+        cursor: pointer;
+      }
+      #list > ul {
+        height: 100%;
+        margin: 0;
+        padding: 1ex;
+        list-style-type: none;
+        background-color: #fff;
+        border: 1px solid #888;
+      }
+      #list > ul > li {
+        margin: 1px;
+      }
+      #pane {
+        flex: auto;
+        display: flex;
+        flex-direction: column;
+        border: 1px solid #888;
+      }
+      #content {
+        flex: auto;
+        padding: 1ex;
+      }
+      #status {
+        height: 150px;
+        flex: none;
+        padding: 1ex;
+        background-color: #eee;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="ui">
+      <div id="list">
+        <ul>
+          <li>apple</li>
+          <li>banana</li>
+          <li>orange</li>
+        </ul>
+      </div>
+      <div id="pane">
+        <div id="content">
+          <h2>Content</h2>
+          <p>Lorem ipsum dolor sit amet</p>
+        </div>
+        <div id="status">
+          Status
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

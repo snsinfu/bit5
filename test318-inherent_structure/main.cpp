@@ -185,6 +185,8 @@ void simulation::run_simulation()
         }
     };
 
+    handle_step(0);
+
     md::simulate_brownian_dynamics(_system, {
         .temperature = _config.temperature,
         .timestep    = _config.timestep,

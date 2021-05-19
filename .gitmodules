@@ -11,3 +11,6 @@
 	path = submodules/github.com/snsinfu/micromd@variant-2d
 	url = https://github.com/snsinfu/micromd.git
 	branch = variant-2d
+[submodule "submodules/github.com/danielaparker/jsoncons"]
+	path = submodules/github.com/danielaparker/jsoncons
+	url = https://github.com/danielaparker/jsoncons.git

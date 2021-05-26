@@ -1,4 +1,4 @@
-from z3 import Solver, Bools, And, Or, Not, Implies, If, sat
+from z3 import Solver, Bools, And, Or, Not, Implies, sat
 
 #        (c)  (d)
 #         |    |
@@ -17,12 +17,13 @@ def repress(x, y):
 
 
 def arrow(direction, x, y):
-    return If(direction, repress(x, y), repress(y, x))
+    forward = And(direction, repress(x, y))
+    backward = And(Not(direction), repress(y, x))
+    return Or(forward, backward)
 
 
 solver = Solver()
 
-solver.add(Or(ab, ac, ba, bd, cd, ca, dc, db))
 solver.add(Or(a, b, c, d))
 solver.add(arrow(ab, a, b))
 solver.add(arrow(ac, a, c))

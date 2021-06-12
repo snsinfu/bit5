@@ -11,7 +11,7 @@ struct simulation_config
     std::size_t   genes;
     double        generation_rate;
     double        decay_rate;
-    double        repressor_energy;
+    double        adsorption;
     double        tau;
     long          steps;
     std::uint64_t random_seed;
@@ -47,9 +47,9 @@ int main()
         .genes            = 3,
         .generation_rate  = 1.0,    // 1 per hour
         .decay_rate       = 0.5,    // 0.5 per hour
-        .repressor_energy = 5.0,    // strong (5 kT)
-        .tau              = 0.2,    // 0.2 hours
-        .steps            = 1000,   // 200 hours (1+ week)
+        .adsorption       = 20.0,   // strong
+        .tau              = 0.1,    // 0.1 hours
+        .steps            = 2000,   // 200 hours (1+ week)
         .random_seed      = 0,
     };
     simulation(config).run();
@@ -84,7 +84,7 @@ void simulation::update_deltas()
     // but is convenient to illustrate the system) is:
     //
     //   d/dt x(i) = g phi(i) - k x(i)
-    //   phi(i) = exp(-e x(i+1))
+    //   phi(i) = 1 / (1 + a x(i+1))
     //
     // x(i): expression amount of i-th gene
     // phi(i): regulation state of i-th gene (0: off, 1: on)
@@ -92,18 +92,26 @@ void simulation::update_deltas()
     //
     // g: basic expression rate
     // k: decay rate
-    // e: binding energy of a repressor
+    // a: repressor adsorption boltzmann factor exp(-β (ε - μ))
+    //
+    // The single-particle chemical potential μ of a protein of typical mass
+    // 50 kDa is estimated to be βμ ~ -50 in a nucleus of volume 200 μm^3
+    // assuming an ideal gas. The binding free energy of a DNA binding protein
+    // is around ~30 kcal/mol, which is βε ~ -50, hence a ~ 1. If the binding
+    // free energy is a bit stronger 33kcal/mol, we have βε = -55, which gives
+    // far larger a ~ 148. So, it is biophysically reasonable to tune the
+    // parameter a in 1 to 1000.
 
     auto const n = config.genes;
     auto const g = config.generation_rate;
     auto const k = config.decay_rate;
-    auto const e = config.repressor_energy;
+    auto const a = config.adsorption;
     auto const tau = config.tau;
 
     for (std::size_t i = 0; i < n; i++) {
         auto const x_i = amounts[i];
         auto const x_r = amounts[(i + 1) % n];
-        auto const phi = std::exp(-e * x_r);
+        auto const phi = 1 / (1 + a * x_r);
 
         auto const g_mean = tau * g * phi;
         auto const k_mean = tau * k * x_i;

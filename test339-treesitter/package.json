@@ -1,0 +1,12 @@
+{
+  "name": "test339-treesitter",
+  "version": "1.0.0",
+  "main": "bindings/node",
+  "license": "MIT",
+  "dependencies": {
+    "nan": "^2.14.2"
+  },
+  "devDependencies": {
+    "tree-sitter-cli": "^0.19.5"
+  }
+}

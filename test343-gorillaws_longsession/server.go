@@ -35,6 +35,8 @@ func session(ws *websocket.Conn) {
 	ticker := time.NewTicker(messageInterval)
 	defer ticker.Stop()
 
+	go watch(ws)
+
 	for t := range ticker.C {
 		msg := fmt.Sprintf("Message at %s", t)
 
@@ -44,5 +46,33 @@ func session(ws *websocket.Conn) {
 		}
 
 		log.Print("Sent message")
+	}
+}
+
+func watch(ws *websocket.Conn) {
+	const timeout = 3 * time.Second
+
+	ticker := time.NewTicker(timeout*2)
+	defer ticker.Stop()
+
+	pong := make(chan bool)
+	ws.SetPongHandler(func(_ string) error {
+		pong <- true
+		return nil
+	})
+
+	for tick := range ticker.C {
+		if err := ws.WriteControl(websocket.PingMessage, []byte(""), tick.Add(timeout)); err != nil {
+			log.Print("WriteControl: ", err)
+			break
+		}
+
+		select {
+		case <-pong:
+			log.Print("PONG") // This should be printed...
+
+		case <-ticker.C:
+			log.Print("Timeout?") // This should not be printed...
+		}
 	}
 }

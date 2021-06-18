@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <cstddef>
+#include <cstdint>
 #include <cmath>
 #include <iostream>
 #include <optional>
@@ -14,6 +15,7 @@ struct switch_config
     double                     rate       = 1;
 };
 
+
 struct gene_config
 {
     double        expression_rate = 0;
@@ -21,6 +23,7 @@ struct gene_config
     switch_config activation;
     switch_config repression;
 };
+
 
 struct histone_config
 {
@@ -30,11 +33,13 @@ struct histone_config
     switch_config repression;
 };
 
+
 struct epigene_config
 {
     gene_config    gene;
     histone_config histone;
 };
+
 
 struct epigene_state
 {
@@ -42,8 +47,37 @@ struct epigene_state
     int    expression = 0;
 };
 
-template<typename RNG>
-static int poisson(double lambda, RNG& random);
+
+struct simulation_config
+{
+    std::vector<epigene_config> epigenes;
+    double                      timestep    = 1;
+    int                         steps       = 0;
+    std::uint64_t               random_seed = 0;
+};
+
+
+class simulation
+{
+public:
+    explicit simulation(simulation_config const& config);
+    void     run();
+
+private:
+    void   update_deltas();
+    double compute_potential_delta(std::size_t gene_index) const;
+    int    compute_expression_delta(std::size_t gene_index);
+    void   update_state();
+    int    poisson(double lambda);
+    void   print_state(int step) const;
+
+private:
+    simulation_config          m_config;
+    std::vector<epigene_state> m_states;
+    std::vector<double>        m_potential_deltas;
+    std::vector<int>           m_expression_deltas;
+    std::mt19937_64            m_random;
+};
 
 
 int main()
@@ -73,86 +107,150 @@ int main()
         }
     };
 
-    double const tau = 0.1;
-    int const steps = 10000;
+    simulation_config const config = {
+        .epigenes    = epigenes,
+        .timestep    = 0.1,
+        .steps       = 1000,
+        .random_seed = 0,
+    };
 
-    std::vector<epigene_state> states(epigenes.size());
-    std::mt19937_64 random;
+    simulation(config).run();
+}
 
-    std::vector<double> potential_deltas(epigenes.size());
-    std::vector<int> expression_deltas(epigenes.size());
 
-    for (int step = 1; step <= steps; step++) {
-        for (std::size_t i = 0; i < epigenes.size(); i++) {
-            auto const& gene = epigenes[i].gene;
-            auto const& histone = epigenes[i].histone;
+static std::mt19937_64 make_random(std::uint64_t seed)
+{
+    std::seed_seq seed_seq{seed};
+    return std::mt19937_64(seed_seq);
+}
 
-            // Histone dynamics
-            auto const u = states[i].potential;
 
-            double grow_rate = histone.bias;
-            double decay_rate = histone.decay_rate;
+static double presense_gate(int x, switch_config const& sw)
+{
+    auto const ex = sw.efficiency * double(x);
+    return sw.rate * ex / (1 + ex);
+}
 
-            if (auto act = histone.activation; act.gene) {
-                auto const ex = act.efficiency * states[*act.gene].expression;
-                grow_rate += act.rate * ex / (1 + ex);
-            }
 
-            if (auto rep = histone.repression; rep.gene) {
-                auto const ex = rep.efficiency * states[*rep.gene].expression;
-                grow_rate -= rep.rate * ex / (1 + ex);
-            }
+static double absense_gate(int x, switch_config const& sw)
+{
+    auto const ex = sw.efficiency * double(x);
+    return sw.rate / (1 + ex);
+}
 
-            potential_deltas[i] = (u - grow_rate / decay_rate) * std::expm1(-decay_rate * tau);
 
-            // Expression dynamics
-            int dx = 0;
+simulation::simulation(simulation_config const& config)
+    : m_config(config)
+    , m_states(config.epigenes.size())
+    , m_potential_deltas(m_states.size())
+    , m_expression_deltas(m_states.size())
+    , m_random(make_random(config.random_seed))
+{
+}
 
-            double rate = gene.expression_rate;
 
-            rate *= 1 / (1 + std::exp(-u));
+void simulation::run()
+{
+    print_state(0);
 
-            if (auto act = gene.activation; act.gene) {
-                auto const ex = act.efficiency * states[*act.gene].expression;
-                rate *= act.rate * ex / (1 + ex);
-            }
-
-            if (auto rep = gene.repression; rep.gene) {
-                auto const ex = rep.efficiency * states[*rep.gene].expression;
-                rate *= rep.rate / (1 + ex);
-            }
-
-            dx += poisson(rate * tau, random);
-            dx -= poisson(gene.decay_rate * states[i].expression * tau, random);
-
-            expression_deltas[i] = dx;
-        }
-
-        for (std::size_t i = 0; i < epigenes.size(); i++) {
-            states[i].potential += potential_deltas[i];
-            states[i].expression += expression_deltas[i];
-
-            if (states[i].expression < 0) {
-                states[i].expression = 0;
-            }
-        }
-
-        std::cout << tau * double(step);
-        for (auto const& state : states) {
-            std::cout
-                << '\t'
-                << state.potential
-                << '\t'
-                << state.expression;
-        }
-        std::cout << '\n';
+    for (int step = 1; step <= m_config.steps; step++) {
+        update_deltas();
+        update_state();
+        print_state(step);
     }
 }
 
 
-template<typename RNG>
-int poisson(double lambda, RNG& random)
+void simulation::update_deltas()
+{
+    for (std::size_t i = 0; i < m_states.size(); i++) {
+        m_potential_deltas[i] = compute_potential_delta(i);
+        m_expression_deltas[i] = compute_expression_delta(i);
+    }
+}
+
+
+double simulation::compute_potential_delta(std::size_t gene_index) const
+{
+    auto const& histone = m_config.epigenes[gene_index].histone;
+
+    auto const u = m_states[gene_index].potential;
+    auto const tau = m_config.timestep;
+
+    auto decay_rate = histone.decay_rate;
+    auto grow_rate = histone.bias;
+
+    if (auto act = histone.activation; act.gene) {
+        grow_rate += presense_gate(m_states[*act.gene].expression, act);
+    }
+
+    if (auto rep = histone.repression; rep.gene) {
+        grow_rate -= presense_gate(m_states[*rep.gene].expression, rep);
+    }
+
+    return (u - grow_rate / decay_rate) * std::expm1(-decay_rate * tau);
+}
+
+
+int simulation::compute_expression_delta(std::size_t gene_index)
+{
+    auto const& gene = m_config.epigenes[gene_index].gene;
+
+    auto const u = m_states[gene_index].potential;
+    auto const x = m_states[gene_index].expression;
+    auto const tau = m_config.timestep;
+
+    auto inc_rate = gene.expression_rate;
+    auto dec_rate = gene.decay_rate * x;
+
+    // Epigenetic regulation
+    inc_rate *= 1 / (1 + std::exp(-u));
+
+    // Activator
+    if (auto act = gene.activation; act.gene) {
+        inc_rate *= presense_gate(m_states[*act.gene].expression, act);
+    }
+
+    // Repressor
+    if (auto rep = gene.repression; rep.gene) {
+        inc_rate *= absense_gate(m_states[*rep.gene].expression, rep);
+    }
+
+    auto const inc = poisson(inc_rate * tau);
+    auto const dec = poisson(dec_rate * tau);
+    return inc - dec;
+}
+
+
+void simulation::update_state()
+{
+    for (std::size_t i = 0; i < m_states.size(); i++) {
+        m_states[i].potential += m_potential_deltas[i];
+        m_states[i].expression += m_expression_deltas[i];
+    }
+}
+
+
+int simulation::poisson(double lambda)
 {
     std::poisson_distribution<int> distr(lambda);
-    return distr(random);
+    return distr(m_random);
+}
+
+
+void simulation::print_state(int step) const
+{
+    auto const simulated_time = double(step) * m_config.timestep;
+
+    std::cout << simulated_time;
+
+    for (auto const& state : m_states) {
+        std::cout
+            << '\t'
+            << state.potential
+            << '\t'
+            << state.expression;
+    }
+
+    std::cout << '\n';
 }

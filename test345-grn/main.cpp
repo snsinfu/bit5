@@ -82,6 +82,9 @@ private:
 
 int main()
 {
+    // Two mutually repressing genes. The repressing regulations are epigenetic.
+    // The simulation shows oscillation between (on, off) and (off, on) states.
+
     std::vector<epigene_config> const epigenes = {
         {
             .gene = {
@@ -110,7 +113,7 @@ int main()
     simulation_config const config = {
         .epigenes    = epigenes,
         .timestep    = 0.1,
-        .steps       = 1000,
+        .steps       = 10000,
         .random_seed = 0,
     };
 
@@ -127,15 +130,21 @@ static std::mt19937_64 make_random(std::uint64_t seed)
 
 static double presense_gate(int x, switch_config const& sw)
 {
-    auto const ex = sw.efficiency * double(x);
-    return sw.rate * ex / (1 + ex);
+    auto const weight = sw.efficiency * double(x);
+    return sw.rate * weight / (1 + weight);
 }
 
 
 static double absense_gate(int x, switch_config const& sw)
 {
-    auto const ex = sw.efficiency * double(x);
-    return sw.rate / (1 + ex);
+    auto const weight = sw.efficiency * double(x);
+    return sw.rate / (1 + weight);
+}
+
+
+static double histone_gate(double u)
+{
+    return 1 / (1 + std::exp(-u));
 }
 
 
@@ -173,17 +182,28 @@ void simulation::update_deltas()
 double simulation::compute_potential_delta(std::size_t gene_index) const
 {
     auto const& histone = m_config.epigenes[gene_index].histone;
-
     auto const u = m_states[gene_index].potential;
     auto const tau = m_config.timestep;
 
-    auto decay_rate = histone.decay_rate;
-    auto grow_rate = histone.bias;
+    // We compute the grow and decay parameters in the differential equation:
+    //
+    //   du/dt = grow_rate - decay_rate * u .
+    //
+    // We assume hese parameters to be constant because of the leap condition.
+    // Then, we can calculate the analytic solution of u(t + tau) given u(t).
+    //
+    // grow_rate is modulated by epigenetic activator and epigenetic repressor.
+    // decay_rate is constant.
 
+    auto grow_rate = histone.bias;
+    auto decay_rate = histone.decay_rate;
+
+    // Activating factor brings up the epigenetic potential.
     if (auto act = histone.activation; act.gene) {
         grow_rate += presense_gate(m_states[*act.gene].expression, act);
     }
 
+    // Repressing factor brings up the epigenetic potential.
     if (auto rep = histone.repression; rep.gene) {
         grow_rate -= presense_gate(m_states[*rep.gene].expression, rep);
     }
@@ -195,27 +215,36 @@ double simulation::compute_potential_delta(std::size_t gene_index) const
 int simulation::compute_expression_delta(std::size_t gene_index)
 {
     auto const& gene = m_config.epigenes[gene_index].gene;
-
     auto const u = m_states[gene_index].potential;
     auto const x = m_states[gene_index].expression;
     auto const tau = m_config.timestep;
 
+    // A single expressed gene may experience two events in the leap time:
+    //
+    //   (1) Expression.
+    //   (2) Decay.
+    //
+    // (1) may be modulated by histone state, activating protein and repressing
+    // protein. We here calcualte the modulated rates, then generate actual
+    // number of the events using poisson distribution.
+
     auto inc_rate = gene.expression_rate;
     auto dec_rate = gene.decay_rate * x;
 
-    // Epigenetic regulation
-    inc_rate *= 1 / (1 + std::exp(-u));
+    // Histone state (on/off) modulates the rate of expression.
+    inc_rate *= histone_gate(u);
 
-    // Activator
+    // Activating protein brings up the rate on its presense.
     if (auto act = gene.activation; act.gene) {
         inc_rate *= presense_gate(m_states[*act.gene].expression, act);
     }
 
-    // Repressor
+    // Repressing protein brings down the rate on its presense.
     if (auto rep = gene.repression; rep.gene) {
         inc_rate *= absense_gate(m_states[*rep.gene].expression, rep);
     }
 
+    // Tau-leaping.
     auto const inc = poisson(inc_rate * tau);
     auto const dec = poisson(dec_rate * tau);
     return inc - dec;
@@ -227,6 +256,9 @@ void simulation::update_state()
     for (std::size_t i = 0; i < m_states.size(); i++) {
         m_states[i].potential += m_potential_deltas[i];
         m_states[i].expression += m_expression_deltas[i];
+
+        // Negative expression does not make sense. Saturate at zero.
+        m_states[i].expression = std::max(0, m_states[i].expression);
     }
 }
 

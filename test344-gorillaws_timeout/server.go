@@ -11,7 +11,8 @@ import (
 
 const (
 	messageInterval = 5 * time.Second
-	pingPongTimeout = 1 * time.Second
+	pingPongTimeout = 3 * time.Second
+	patience = 5
 )
 
 func main() {
@@ -27,6 +28,8 @@ func main() {
 		go session(ws)
 	})
 
+	log.Print("Listening")
+
 	log.Fatal(http.ListenAndServe(":15343", nil))
 }
 
@@ -41,17 +44,27 @@ func session(ws *websocket.Conn) {
 
 	defer log.Print("End session")
 
-	ws.SetReadDeadline(time.Now().Add(pingPongTimeout))
 	ws.SetPongHandler(func(string) error {
+		log.Print("Got pong")
 		ws.SetReadDeadline(time.Now().Add(pingPongTimeout))
 		return nil
 	})
 
+	noPong := make(chan bool)
+
 	go func() {
+		counter := 0
 		for {
-			if _, _, err := ws.ReadMessage(); err != nil {
+			if _, _, err := ws.NextReader(); err != nil {
+				counter++
 				log.Print("ReadMessage: ", err)
-				return
+				if counter > patience {
+					noPong <- true
+					break
+				}
+				time.Sleep(pingPongTimeout) // ?
+			} else {
+				counter = 0
 			}
 		}
 	}()
@@ -69,10 +82,15 @@ func session(ws *websocket.Conn) {
 			log.Print("Sent message")
 
 		case t := <-ping.C:
+			ws.SetReadDeadline(time.Now().Add(pingPongTimeout))
 			if err := ws.WriteControl(websocket.PingMessage, nil, t.Add(pingPongTimeout)); err != nil {
 				log.Print("WriteControl: ", err)
 				return
 			}
+			log.Print("Sent ping")
+
+		case <-noPong:
+			log.Print("No pong")
 		}
 	}
 }

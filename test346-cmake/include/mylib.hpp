@@ -1,0 +1,4 @@
+#ifndef INCLUDED_MYLIB_HPP
+#define INCLUDED_MYLIB_HPP
+
+#endif

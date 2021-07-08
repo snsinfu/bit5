@@ -34,7 +34,8 @@ X = signed_log(q)
 ax.matshow(
     X.T,
     extent=[0, X.shape[0], n + 0.5, 0.5],
-    vmin=-0.02, vmax=0.02, cmap="p:sign", aspect="auto",
+    #vmin=-0.02, vmax=0.02, cmap="p:sign", aspect="auto",
+    aspect="auto",
     zorder=1,
 )
 

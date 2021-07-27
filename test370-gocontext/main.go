@@ -9,11 +9,13 @@ import (
 	"net"
 	"os"
 	"os/signal"
+	"time"
 )
 
 const (
-	listenAddr = "127.0.0.1:9500"
-	bufferSize = 1024
+	listenAddr    = "127.0.0.1:9500"
+	bufferSize    = 1024
+	connCloseWait = 3 * time.Second
 )
 
 
@@ -71,6 +73,12 @@ func run(ctx context.Context) error {
 
 	log.Print("server terminated")
 
+	// Need to wait for echo handlers to gracefully close connections. I could
+	// (should?) use a synchronization primitive, but then I have to keep track
+	// of all incoming connections. Also, there can always be non-responding
+	// bad connections. So, maybe sleeping is a good enough compromise here...
+	time.Sleep(connCloseWait)
+
 	return nil
 }
 
@@ -106,7 +114,7 @@ func echo(conn *net.TCPConn, ctx context.Context) error {
 		}
 	}
 
-	log.Print("echo stopped (remote: %s)", conn.RemoteAddr())
+	log.Printf("echo stopped (remote: %s)", conn.RemoteAddr())
 
 	return nil
 }

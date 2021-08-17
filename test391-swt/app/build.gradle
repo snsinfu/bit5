@@ -1,0 +1,33 @@
+buildscript {
+    ext {
+        kotlin_version = '1.5.0'
+        guava_version = '30.1.1-jre'
+        swt_version = '3.116.100'
+        swt_platform = 'cocoa.macosx.x86_64'
+    }
+}
+
+plugins {
+    id 'org.jetbrains.kotlin.jvm' version "$kotlin_version"
+    id 'application'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation platform('org.jetbrains.kotlin:kotlin-bom')
+    implementation 'org.jetbrains.kotlin:kotlin-stdlib-jdk8'
+    implementation "com.google.guava:guava:$guava_version"
+
+    //testImplementation 'org.jetbrains.kotlin:kotlin-test'
+    //testImplementation 'org.jetbrains.kotlin:kotlin-test-junit'
+
+    // This fails. FIXME
+    implementation "org.eclipse.platform:org.eclipse.swt.$swt_platform:$swt_version"
+}
+
+application {
+    mainClass = 'demo.App'
+}

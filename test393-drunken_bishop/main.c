@@ -117,4 +117,9 @@ main()
 
     drunken_bishop(hash, sizeof hash, board);
     print_board(board);
+
+    hash[hash_size - 1] ^= 1;
+
+    drunken_bishop(hash, sizeof hash, board);
+    print_board(board);
 }

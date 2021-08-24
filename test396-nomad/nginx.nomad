@@ -5,6 +5,7 @@ job "demo-nginx" {
     network {
       port "web" {
         to = 80  # ?
+        static = 8080
       }
     }
 

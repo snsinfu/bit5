@@ -17,9 +17,14 @@ job "test" {
       driver = "exec"
 
       config {
-        # XXX: I'm still unsure how exec driver finds out the executable.
-        # `caddy` and `local/caddy` works, while `/local/caddy` does not.
-        # ps on the host machine shows `/local/caddy` running in chroot.
+        # exec driver looks up the command binary from $task/local/,
+        # $task/ and $PATHs in this order *before* chrooting to task fs.
+        # Thus, "caddy" and "local/caddy" works, while "/local/caddy"
+        # does not since it's not on the host fs. Confusingly though,
+        # ps on host machine shows "/local/caddy" running in chroot.
+        # And, for caddy running in chroot, Caddyfile must be found
+        # at /local/Caddyfile.
+        # https://github.com/hashicorp/nomad/blob/v1.1.4/drivers/shared/executor/executor.go#L638
         command = "caddy"
         args = ["run", "-config", "/local/Caddyfile"]
       }

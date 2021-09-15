@@ -4,13 +4,12 @@ import numpy as np
 
 
 start_frame = 100
-interval = 10
 box_size = 1.0
 bin_width = 0.005
 
 
 with h5py.File("simulation/_output.h5", "r") as store:
-    points_samples = store["positions_history"][start_frame::interval]
+    points_samples = store["positions_history"][start_frame:]
 
 cutoff_distance = box_size / 2
 n_samples, n_points, _ = points_samples.shape

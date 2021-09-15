@@ -8,9 +8,9 @@
 
 int main()
 {
-    md::index   const particles = 1000;
+    md::index   const particles = 1200;
     md::scalar  const diameter  = 0.1;
-    md::scalar  const repulsion = 10.0;
+    md::scalar  const repulsion = 20.0;
     md::scalar  const box_size  = 1.0;
     md::scalar  const timestep  = 1e-4;
     md::step    const steps     = 1000000;
@@ -31,7 +31,7 @@ int main()
 
     system.add_forcefield(
         md::make_neighbor_pairwise_forcefield<md::periodic_box>(
-            md::softcore_potential<6, 4>{
+            md::softcore_potential<2, 3>{
                 .energy   = repulsion,
                 .diameter = diameter,
             }
@@ -63,8 +63,8 @@ int main()
     callback(0);
 
     md::simulate_brownian_dynamics(system, {
-        .steps    = steps,
         .timestep = timestep,
+        .steps    = steps,
         .seed     = random(),
         .callback = callback,
     });

@@ -53,7 +53,6 @@ def evaluate_integral(r, prev_Ir):
     return Ir
 
 
-
 for iteration in range(max_iterations):
     I_prev = I.copy()
 
@@ -69,9 +68,6 @@ nI = density * I
 w = -np.log(g)
 u = w + nI
 
-import matplotlib.pyplot as plt
-
-plt.plot(r_centers, w)
-plt.plot(r_centers, u)
-plt.show()
+for r, gr in zip(r_centers, np.exp(-u)):
+    print(f"{r:g}\t{gr:g}")
 

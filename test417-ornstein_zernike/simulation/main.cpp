@@ -12,7 +12,7 @@ int main()
     md::scalar  const diameter  = 0.1;
     md::scalar  const repulsion = 20.0;
     md::scalar  const box_size  = 1.0;
-    md::scalar  const timestep  = 1e-4;
+    md::scalar  const timestep  = 1e-5;
     md::step    const steps     = 1000000;
     md::step    const interval  = 1000;
     std::string const filename  = "_output.h5";

@@ -1,0 +1,108 @@
+:root {
+  --ui: #e0e0e0;
+  --ui-ex: #e8e8ff;
+  --ui-hi: #ffffff;
+  --ui-lo: #808080;
+  --ui-text: #111111;
+  --primary: #f0a30a;
+  --primary-ex: #fa6800;
+  --primary-hi: #e3c800;
+  --primary-lo: #a0522d;
+  --primary-text: #f8f8f8;
+  --background: #fafafa;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background-color: var(--background);
+  font: 16px/20px system-ui;
+}
+
+h1 { font-size: 200%; font-weight: bold; }
+h2 { font-size: 150%; font-weight: bold; }
+
+main {
+  max-width: 100ex;
+  margin: 0 auto;
+}
+
+button {
+  display: inline-block;
+  background-color: var(--ui);
+  border-top: 1px solid var(--ui-hi);
+  border-left: 1px solid var(--ui-hi);
+  border-bottom: 1px solid var(--ui-lo);
+  border-right: 1px solid var(--ui-lo);
+  border-radius: 3px;
+  color: var(--ui-text);
+  font-size: 12px;
+  padding: 1ex 3ex;
+  margin: 0.5ex 0.2ex;
+}
+
+button:active {
+  background-color: var(--ui-ex);
+  border-top-color: var(--ui-lo);
+  border-left-color: var(--ui-lo);
+  border-bottom-color: var(--ui-hi);
+  border-right-color: solid var(--ui-hi);
+  padding: 1.1ex 2.9ex 0.9ex 3.1ex;
+}
+
+button:hover {
+  cursor: pointer;
+}
+
+button:focus {
+  text-decoration: underline;
+}
+
+button.primary {
+  background-color: var(--primary);
+  border-top-color: var(--primary-hi);
+  border-left-color: var(--primary-hi);
+  border-right-color: var(--primary-lo);
+  border-bottom-color: var(--primary-lo);
+  color: var(--primary-text);
+}
+
+button.primary:active {
+  background-color: var(--primary-ex);
+  border-top-color: var(--primary-lo);
+  border-left-color: var(--primary-lo);
+  border-right-color: var(--primary-hi);
+  border-bottom-color: var(--primary-hi);
+}
+
+.form {
+  display: block;
+  max-width: 80ex;
+  border: 1px solid var(--ui-lo);
+  border-radius: 3px;
+  padding: 1.5ex;
+}
+
+textarea {
+  display: block;
+  width: 100%;
+  height: 20ex;
+  margin: 0.5ex 0;
+  padding: 0.5ex;
+  resize: none;
+  overflow: auto;
+  border: 1px solid var(--ui-lo);
+  border-top-color: var(--ui-lo);
+  border-left-color: var(--ui-lo);
+  border-right-color: var(--ui-hi);
+  border-bottom-color: var(--ui-hi);
+  border-radius: 3px;
+  font: inherit;
+}
+
+.right-adjuster {
+  display: flex;
+  justify-content: right;
+}
